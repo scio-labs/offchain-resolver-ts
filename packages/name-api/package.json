@@ -20,6 +20,9 @@
   "homepage": "https://github.com/nicktaras/fastify-better-sqllite-server#readme",
   "dependencies": {
     "better-sqlite3": "^9.2.2",
-    "fastify": "^4.25.2"
+    "commander": "^11.1.0",
+    "ethers": "^6.9.2",
+    "fastify": "^4.25.2",
+    "json": "^11.0.0"
   }
 }
