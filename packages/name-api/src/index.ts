@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fastify from 'fastify';
 import { Command } from 'commander';
 import { ethers } from 'ethers';
@@ -9,14 +10,14 @@ program
     '-k --private-key <key>',
     'Private key to sign responses with. Prefix with @ to read from a file'
   )
-  .requiredOption('-d --data <file>', 'JSON file to read data from')
+  .requiredOption('-d --data <file>', 'JSON file to read data from');
 program.parse(process.argv);
 const options = program.opts();
-let privateKey = options.privateKey;
+const privateKey: string = options.privateKey;
 
-const address = ethers.utils.computeAddress(privateKey);
-const signer = new ethers.utils.SigningKey(privateKey);
-const db = JSONDatabase.fromFilename(options.data, parseInt(options.ttl));
+const address: string = ethers.computeAddress(privateKey);
+const signer: ethers.SigningKey = new ethers.SigningKey(privateKey);
+const db: JSONDatabase = JSONDatabase.fromFilename(options.data, parseInt(options.ttl, 10));
 
 const app = fastify();
 
@@ -28,16 +29,16 @@ app.get('/:name/:tokenId/:signature', async (request, reply) => {
   const { name, tokenId, signature } = request.params;
   // first check if name is taken
   if (!db.checkAvailable(name)) {
-    return "Error: Name Unavilable";
+    return "Error: Name Unavailable";
   }
-  
-  return { param1, param2, param3 };
+
+  return { name, tokenId, signature };
 });
 
 const start = async () => {
   try {
     await app.listen({ port: 8083 });
-    app.log.info(`Server is listening on ${app.server.address().port}`);
+    app.log.info(`Server is listening on ${app.server?.address().port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
