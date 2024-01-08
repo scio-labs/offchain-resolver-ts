@@ -99,8 +99,11 @@ export function makeServer(signer: ethers.utils.SigningKey, db: Database) {
       type: 'resolve',
       func: async ([encodedName, data]: Result, request) => {
         const name = decodeDnsName(Buffer.from(encodedName.slice(2), 'hex'));
+        console.log("Request: " + name);
         // Query the database
         const { result, validUntil } = await query(db, name, data);
+
+        console.log("Request from DB: " + result + " : " + validUntil);
 
         // Hash and sign the response
         let messageHash = ethers.utils.solidityKeccak256(
