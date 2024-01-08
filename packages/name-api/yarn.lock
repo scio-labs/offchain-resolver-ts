@@ -3051,7 +3051,7 @@ esutils@^2.0.2:
 
 ethers@^6.9.2:
   version "6.9.2"
-  resolved "https://registry.npmjs.org/ethers/-/ethers-6.9.2.tgz"
+  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.9.2.tgz#6f4632f62e2350fa8354ff28624027a175ef85a4"
   integrity sha512-YpkrtILnMQz5jSEsJQRTpduaGT/CXuLnUIuOYzHA0v/7c8IX91m2J48wSKjzGL5L9J/Us3tLoUdb+OwE3U+FFQ==
   dependencies:
     "@adraffy/ens-normalize" "1.10.0"
@@ -3266,7 +3266,7 @@ fast-uri@^2.0.0, fast-uri@^2.1.0:
 
 fastify@^4.25.2:
   version "4.25.2"
-  resolved "https://registry.npmjs.org/fastify/-/fastify-4.25.2.tgz"
+  resolved "https://registry.yarnpkg.com/fastify/-/fastify-4.25.2.tgz#ce725c9f457149244ebfec848468fa3550f0981f"
   integrity sha512-SywRouGleDHvRh054onj+lEZnbC1sBCLkR0UY3oyJwjD4BdZJUrxBqfkfCaqn74pVCwBaRHGuL3nEWeHbHzAfw==
   dependencies:
     "@fastify/ajv-compiler" "^3.5.0"
@@ -6979,10 +6979,10 @@ typescript@^3.7.3:
   resolved "https://registry.npmjs.org/typescript/-/typescript-3.9.10.tgz"
   integrity sha512-w6fIxVE/H1PkLKcCPsFqKE7Kv7QUwhU8qQY2MueZXWx5cPZdwFupLgKK3vntcK98BtNHZtAF4LA/yl2a7k8R6Q==
 
-typescript@^5.3.3:
-  version "5.3.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.3.3.tgz#b3ce6ba258e72e6305ba66f5c9b452aaee3ffe37"
-  integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
+typescript@^4.5.4:
+  version "4.9.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.9.5.tgz#095979f9bcc0d09da324d58d03ce8f8374cbe65a"
+  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
 
 unbox-primitive@^1.0.2:
   version "1.0.2"

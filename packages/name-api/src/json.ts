@@ -63,8 +63,10 @@ export class JSONDatabase {
   }
 
   checkAvailable(name: string): boolean {
+    console.log("YOLESS 1");
     const fullName = name + ".smartcat.eth";
     const nameData = this.findName(fullName);
+    console.log("YOLESS 2: " + fullName + " : " + nameData);
     if (!nameData || !nameData.text) {
       return true;
     } else {
