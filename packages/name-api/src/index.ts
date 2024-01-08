@@ -5,7 +5,7 @@ import { JSONDatabase } from "./json";
 import fs from 'fs';
 import https from 'https';
 import { PRIVATE_KEY, JSON_DB_FILE, PATH_TO_CERT } from "./constants";
-import cors from '@fastify/cors'
+import cors from '@fastify/cors';
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
@@ -58,8 +58,8 @@ app.get('/checkname/:name', async (request, reply) => {
   }
 });
 
-app.post('/:name/:tokenId/:signature', async (request, reply) => {
-  const { name, tokenId, signature } = request.params;
+app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
+  const { name, tokenId, tbaAccount, signature } = request.params;
   // first check if name is taken
   if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";
@@ -70,7 +70,19 @@ app.post('/:name/:tokenId/:signature', async (request, reply) => {
     //now determine if user owns the NFT
     const userOwns = await userOwnsNFT(applyerAddress, tokenId);
     if (userOwns) {
+      //make entry in the database
+      //calculate TBA address
+      /*const tokenboundAccount = tokenboundClient.getAccount({
+        tokenContract: testContractAddress,
+        tokenId: tokenId,
+      })*/
+
+      console.log("TBA: " + tbaAccount);
+
+      const retVal: string = db.addElement(name, tbaAccount);
+
       return "pass";
+
     } else {
       return "fail: User does not own NFT";
     }

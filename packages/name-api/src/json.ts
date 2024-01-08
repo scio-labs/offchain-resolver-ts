@@ -65,19 +65,17 @@ export class JSONDatabase {
   checkAvailable(name: string): boolean {
     const fullName = name + ".smartcat.eth";
     const nameData = this.findName(fullName);
-    if (!nameData || !nameData.text) {
+    if (!nameData || !nameData.addresses) {
       return true;
     } else {
       return false;
     }
   }
 
-  addElement(name: string, address: string): string {
-    console.log("YOLESS 2");
+  addElement(name: string, address: string) {
     const fullName = name + ".smartcat.eth";
     const nameData = this.findName(fullName);
-    console.log("YOLESS 3 " + fullName);
-    if (!nameData || !nameData.text) {
+    if (!nameData || !nameData.addresses) {
       
       let text = `{
             "addresses": {
@@ -92,14 +90,6 @@ export class JSONDatabase {
 
       //save to file
       writeFileSync(jFileName, JSON.stringify(this.data));
-
-      return "no match" ;
-
-    } else {
-      if (nameData && nameData.addresses && nameData.addresses[60]) {
-        console.log("YOLESS 5 " + fullName + " : " + nameData.addresses[60] + nameData?.text);
-      }
-      return "match";
     }
   }
 
