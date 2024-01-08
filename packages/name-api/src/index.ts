@@ -6,13 +6,21 @@ import fs from 'fs';
 import https from 'https';
 import { PRIVATE_KEY, JSON_DB_FILE, PATH_TO_CERT } from "./constants";
 import cors from '@fastify/cors';
+import Database from 'better-sqlite3';
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
-const db: JSONDatabase = JSONDatabase.fromFilename(
-  JSON_DB_FILE,
-  10
-);
+
+const db = new Database('ensnames.db', { verbose: console.log });
+
+const createTable = db.prepare(`
+  CREATE TABLE IF NOT EXISTS ensnames (
+    name TEXT PRIMARY KEY,
+    tba TEXT NOT NULL
+  )
+`);
+
+createTable.run();
 
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
@@ -23,9 +31,9 @@ if (PATH_TO_CERT) {
   app = fastify({
     maxParamLength: 1024,
     https: {
-    key: fs.readFileSync('./privkey.pem'),
-    cert: fs.readFileSync('./cert.pem')
-   }
+      key: fs.readFileSync('./privkey.pem'),
+      cert: fs.readFileSync('./cert.pem')
+    }
   });
 } else {
   console.log("No Cert");
@@ -34,7 +42,7 @@ if (PATH_TO_CERT) {
   });
 }
 
-await app.register(cors, { 
+await app.register(cors, {
   origin: true
 })
 
@@ -44,17 +52,18 @@ const testCatsContract = new ethers.Contract(testContractAddress, [
 
 app.get('/checkname/:name', async (request, reply) => {
   const name = request.params.name;
-  if (!db.checkAvailable(name)) {
+  const ensname = db.prepare('SELECT * FROM ensnames WHERE id = ?').get(name);
+  if (!ensname) {
     return "unavailable";
   } else {
     return "available";
   }
 });
 
-app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
-  const { name, tokenId, tbaAccount, signature } = request.params;
+app.post('/:name/:tokenId/:tba/:signature', async (request, reply) => {
+  const { name, tokenId, tba, signature } = request.params;
   // first check if name is taken
-  if (!db.checkAvailable(name)) {
+  if (!db.prepare('SELECT * FROM ensnames WHERE name = ?').get(name)) {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
@@ -70,9 +79,10 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
         tokenId: tokenId,
       })*/
 
-      console.log("TBA: " + tbaAccount);
+      console.log("TBA: " + tba);
 
-      const retVal: string = db.addElement(name, tbaAccount);
+      const insertNameRecord = db.prepare('INSERT INTO ensnames (name, tba) VALUES (?, ?)');
+      const result = insertItem.run(id, name);
 
       return "pass";
 
@@ -109,8 +119,6 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
   const wallet = new ethers.Wallet(PRIVATE_KEY);
 
   //let signature = await signer.sign( "YOLESS" );
-
-  
 
   // Sign the message
   const signature = await wallet.signMessage(message);
