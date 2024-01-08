@@ -2,7 +2,9 @@
 import fastify from "fastify";
 import { ethers } from "ethers";
 import { JSONDatabase } from "./json";
-import { PRIVATE_KEY, JSON_DB_FILE } from "./constants";
+import fs from 'fs';
+import https from 'https';
+import { PRIVATE_KEY, JSON_DB_FILE, PATH_TO_CERT } from "./constants";
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
@@ -12,12 +14,29 @@ const db: JSONDatabase = JSONDatabase.fromFilename(
 );
 
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
-
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
-const app = fastify({
-  maxParamLength: 1024
-});
+var httpsServer;
+var app;
+
+if (PATH_TO_CERT) {
+  const sslCertificate = fs.readFileSync(PATH_TO_CERT + "/cert.pem");
+  const sslKey = fs.readFileSync(PATH_TO_CERT + "/privkey.pem");
+  httpsServer = https.createServer({
+    cert: sslCertificate,
+    key: sslKey
+  });
+  app = fastify({
+    maxParamLength: 1024,
+    server: httpsServer
+  });
+} else {
+  console.log("No Cert");
+  httpsServer = null;
+  app = fastify({
+    maxParamLength: 1024
+  });
+}
 
 const testCatsContract = new ethers.Contract(testContractAddress, [
   'function ownerOf(uint256 tokenId) view returns (address)'
