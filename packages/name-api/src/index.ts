@@ -17,15 +17,9 @@ const db: JSONDatabase = JSONDatabase.fromFilename(
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
-var httpsServer;
 var app;
 
-
 if (PATH_TO_CERT) {
-  httpsServer = https.createServer({
-    cert: sslCertificate,
-    key: sslKey
-  });
   app = fastify({
     maxParamLength: 1024,
     https: {
@@ -35,7 +29,6 @@ if (PATH_TO_CERT) {
   });
 } else {
   console.log("No Cert");
-  httpsServer = null;
   app = fastify({
     maxParamLength: 1024
   });
