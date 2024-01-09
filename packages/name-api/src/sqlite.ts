@@ -23,7 +23,7 @@ export class SQLiteDatabase {
   }
 
   addr(name: string, coinType: number) {
-    const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name);
+    const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
     const addresses = row ? JSON.parse(row.addresses) : null;
 
     if (!addresses || !addresses[coinType]) {
@@ -34,7 +34,7 @@ export class SQLiteDatabase {
   }
 
   text(name: string, key: string) {
-    const row = this.db.prepare('SELECT text FROM names WHERE name = ?').get(name);
+    const row = this.db.prepare('SELECT text FROM names WHERE name = ?').get(name.toLowerCase());
     const text = row ? JSON.parse(row.text) : null;
 
     if (!text || !text[key]) {
@@ -45,7 +45,7 @@ export class SQLiteDatabase {
   }
 
   contenthash(name: string) {
-    const row = this.db.prepare('SELECT contenthash FROM names WHERE name = ?').get(name);
+    const row = this.db.prepare('SELECT contenthash FROM names WHERE name = ?').get(name.toLowerCase());
     const contenthash = row ? row.contenthash : null;
 
     if (!contenthash) {
@@ -56,12 +56,12 @@ export class SQLiteDatabase {
   }
 
   checkAvailable(name: string): boolean {
-    const row = this.db.prepare('SELECT * FROM names WHERE name = ?').get(name);
+    const row = this.db.prepare('SELECT * FROM names WHERE name = ?').get(name.toLowerCase());
     return !row;
   }
 
   addElement(name: string, address: string) {
-    const fullName = name + '.smartcat.eth';
+    const fullName = name.toLowerCase() + '.smartcat.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
     const addresses = { 60: address };
     // TODO - how is this created?
