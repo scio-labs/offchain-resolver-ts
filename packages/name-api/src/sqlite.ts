@@ -20,16 +20,17 @@ export class SQLiteDatabase {
         text TEXT,
         contenthash TEXT,
         chain_id INTEGER,
-        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_chain_id(chain_id),
-        INDEX idx_createdAt(createdAt)
-      )
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     `);
   }
 
   addr(name: string, coinType: number) {
     const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
-    const addresses = row ? JSON.parse(row.addresses) : null;
+
+    console.log(row);
+
+    const addresses = null;
+    //const addresses = row ? JSON.parse(row.addresses) : null;
 
     if (!addresses || !addresses[coinType]) {
       return { addr: ZERO_ADDRESS };
@@ -40,7 +41,11 @@ export class SQLiteDatabase {
 
   text(name: string, key: string) {
     const row = this.db.prepare('SELECT text FROM names WHERE name = ?').get(name.toLowerCase());
-    const text = row ? JSON.parse(row.text) : null;
+
+    console.log(row);
+    
+    //const text = row ? JSON.parse(row.text) : null;
+    const text = null;
 
     if (!text || !text[key]) {
       return { value: '' };
@@ -51,7 +56,11 @@ export class SQLiteDatabase {
 
   contenthash(name: string) {
     const row = this.db.prepare('SELECT contenthash FROM names WHERE name = ?').get(name.toLowerCase());
-    const contenthash = row ? row.contenthash : null;
+
+    console.log(row);
+    
+    //const contenthash = row ? row.contenthash : null;
+    const contenthash = null;
 
     if (!contenthash) {
       return { contenthash: EMPTY_CONTENT_HASH };
