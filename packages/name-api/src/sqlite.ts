@@ -34,7 +34,7 @@ export class SQLiteDatabase {
   }
 
   getNameFromAddress(address: string): string | null {
-    const row = this.db.prepare('SELECT name FROM names WHERE addresses LIKE ?').get(`%"${address}"%`);
+    const row = this.db.prepare('SELECT name FROM names WHERE addresses LIKE ? ORDER BY createdAt DESC LIMIT 1').get(`%"${address}"%`);
     if (row) {
       // @ts-ignore
       return row.name;
@@ -48,8 +48,8 @@ export class SQLiteDatabase {
 
     console.log(row);
 
-    //const text = row ? JSON.parse(row.text) : null;
-    const text = null;
+    // @ts-ignore
+    const text = row ? JSON.parse(row.text) : null;
 
     if (!text || !text[key]) {
       return { value: '' };
@@ -78,10 +78,19 @@ export class SQLiteDatabase {
     return !row;
   }
 
-  // TODO stop users from having more than 10 names
   addElement(name: string, address: string, chainId: 137) {
     const fullName = name.toLowerCase() + '.smartcat.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
+
+    // @ts-ignore
+    const totalEntries = this.db.prepare('SELECT COUNT(*) as count FROM names').get().count;
+
+    if (totalEntries >= 10) {
+      // Decide what to do when the limit is reached, e.g., replace an existing entry or do nothing
+      console.warn('Limit of 10 entries reached. Skipping addition of a new entry.');
+      return;
+    }
+
     const addresses = { 60: address };
     // TODO - confirm the correct approach to manage off chain content not on IPFS or 
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
