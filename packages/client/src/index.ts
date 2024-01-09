@@ -119,7 +119,15 @@ const returnAbi = [
           const decode = new ethers.utils.Interface(decodeAbi);
           const decoded = decode.decodeFunctionResult('decode', data.data);
 
-          return ethers.utils.getAddress(ethers.utils.hexStripZeros(decoded.address));
+          console.log("Len: " + decoded.address.length);
+          var truncated = decoded.address;
+          if (decoded.address.length > 42) {
+            truncated = "0x" + decoded.address.substring(decoded.address.length - 40);
+          }
+
+          console.log("Truncated: " + truncated);
+
+          return ethers.utils.getAddress(truncated);
         }
       } catch (callError) {
         // nop, expected
