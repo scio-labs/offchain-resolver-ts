@@ -1,17 +1,19 @@
 // @ts-nocheck
 import fastify from "fastify";
 import { ethers } from "ethers";
-import { JSONDatabase } from "./json";
+import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
 import https from 'https';
-import { PRIVATE_KEY, JSON_DB_FILE, PATH_TO_CERT } from "./constants";
+
+import { PRIVATE_KEY, SQLite_DB_FILE, PATH_TO_CERT } from "./constants";
+
 import cors from '@fastify/cors';
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
-const db: JSONDatabase = JSONDatabase.fromFilename(
-  JSON_DB_FILE,
-  10
+
+const db: SQLiteDatabase = JSONDatabase.fromFilename(
+  SQLite_DB_FILE, // e.g. 'ensnames.db'
 );
 
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
@@ -23,9 +25,9 @@ if (PATH_TO_CERT) {
   app = fastify({
     maxParamLength: 1024,
     https: {
-    key: fs.readFileSync('./privkey.pem'),
-    cert: fs.readFileSync('./cert.pem')
-   }
+      key: fs.readFileSync('./privkey.pem'),
+      cert: fs.readFileSync('./cert.pem')
+    }
   });
 } else {
   console.log("No Cert");
@@ -34,7 +36,7 @@ if (PATH_TO_CERT) {
   });
 }
 
-await app.register(cors, { 
+await app.register(cors, {
   origin: true
 })
 
@@ -53,7 +55,6 @@ app.get('/checkname/:name', async (request, reply) => {
 
 app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
   const { name, tokenId, tbaAccount, signature } = request.params;
-  // first check if name is taken
   if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";
   } else {
@@ -63,19 +64,9 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     //now determine if user owns the NFT
     const userOwns = await userOwnsNFT(applyerAddress, tokenId);
     if (userOwns) {
-      //make entry in the database
-      //calculate TBA address
-      /*const tokenboundAccount = tokenboundClient.getAccount({
-        tokenContract: testContractAddress,
-        tokenId: tokenId,
-      })*/
-
       console.log("TBA: " + tbaAccount);
-
       const retVal: string = db.addElement(name, tbaAccount);
-
       return "pass";
-
     } else {
       return "fail: User does not own NFT";
     }
