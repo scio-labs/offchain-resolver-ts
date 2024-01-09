@@ -12,7 +12,7 @@ import cors from '@fastify/cors';
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
 
-const db: SQLiteDatabase = JSONDatabase.fromFilename(
+const db: SQLiteDatabase =  new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'
 );
 

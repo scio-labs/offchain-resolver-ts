@@ -1,13 +1,18 @@
-import Database from 'better-sqlite3';
+import BetterSqlite3 from 'better-sqlite3';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
 
+//const db = Database;// new Database('../ensnames.db', { verbose: console.log });
+
 export class SQLiteDatabase {
-  db: Database;
+
+  db: BetterSqlite3.Database;
+
+  //db: Database = new SQLiteDb('foobar.db', { verbose: console.log });
 
   constructor(dbName: string) {
-    this.db = new Database(dbName);
+    this.db = new BetterSqlite3(dbName, { verbose: console.log });
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS names (
         name TEXT PRIMARY KEY,
