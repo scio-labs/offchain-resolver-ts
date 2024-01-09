@@ -13,7 +13,11 @@ export class SQLiteDatabase {
         name TEXT PRIMARY KEY,
         addresses TEXT,
         text TEXT,
-        contenthash TEXT
+        contenthash TEXT,
+        chain_id INTEGER,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_chain_id(chain_id),
+        INDEX idx_createdAt(createdAt)
       )
     `);
   }
@@ -59,13 +63,16 @@ export class SQLiteDatabase {
   addElement(name: string, address: string) {
     const fullName = name + '.smartcat.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
+    const addresses = { 60: address };
+    // TODO - how is this created?
+    const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
 
     if (!existingRow) {
       const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash) VALUES (?, ?, ?)');
-      const addresses = { 60: address };
-      // TODO - how is this created?
-      const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
       stmt.run(fullName, JSON.stringify(addresses), contenthash);
+    } else {
+      const stmt = this.db.prepare('UPDATE names SET addresses = ?, contenthash = ? WHERE name = ?');
+      stmt.run(JSON.stringify(addresses), contenthash, fullName);
     }
   }
 }
