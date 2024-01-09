@@ -85,9 +85,10 @@ const returnAbi = [
 (async () => {
   const name = program.args[0];
   //let resolver = await provider.getResolver(name); //TODO: This may be updated
-  await resolve(name, ensResolverAddress);
+  let userAddress = await resolve(name, ensResolverAddress);
+  console.log(`UserAddress: ${userAddress}`);
 
-  async function resolve(name: string, resolverAddress: string) {
+  async function resolve(name: string, resolverAddress: string): Promise<string> {
     const namehash = ethers.utils.namehash(name);
     const dnsEncode = ethers.utils.dnsEncode(name);
     const funcEncode = "0x3b3b57de" + namehash.substring(2);
@@ -118,14 +119,14 @@ const returnAbi = [
           const decode = new ethers.utils.Interface(decodeAbi);
           const decoded = decode.decodeFunctionResult('decode', data.data);
 
-          const address = ethers.utils.getAddress(ethers.utils.hexStripZeros(decoded.address));
-
-          console.log("Users resolved Address: " + address);
+          return ethers.utils.getAddress(ethers.utils.hexStripZeros(decoded.address));
         }
       } catch (callError) {
         console.error(`Failed to call URL: ${callError}`);
       }
     }
+
+    return '';
   }
 
 
