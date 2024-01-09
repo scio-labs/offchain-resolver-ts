@@ -3,6 +3,8 @@ import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { ethers } from 'ethers';
 import { JSONDatabase } from './json';
+import cors from 'cors';
+
 const program = new Command();
 program
   .requiredOption(
@@ -24,6 +26,7 @@ const address = ethers.utils.computeAddress(privateKey);
 const signer = new ethers.utils.SigningKey(privateKey);
 const db = JSONDatabase.fromFilename(options.data, parseInt(options.ttl));
 const app = makeApp(signer, '/', db);
+app.use(cors());
 console.log(`Serving on port ${options.port} with signing address ${address}`);
 app.listen(parseInt(options.port));
 
