@@ -24,13 +24,15 @@ export class SQLiteDatabase {
     `);
   }
 
-  addr(name: string, coinType: number) {
+  addr(name: string, coinType: 60) {
     const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
 
     console.log(row);
 
-    const addresses = null;
-    //const addresses = row ? JSON.parse(row.addresses) : null;
+    // const addresses = null;
+
+    // @ts-ignore
+    const addresses = row ? JSON.parse(row.addresses) : null;
 
     if (!addresses || !addresses[coinType]) {
       return { addr: ZERO_ADDRESS };
@@ -39,11 +41,21 @@ export class SQLiteDatabase {
     return { addr: addresses[coinType] };
   }
 
+  getNameFromAddress(address: string): string | null {
+    const row = this.db.prepare('SELECT name FROM names WHERE addresses LIKE ?').get(`%"${address}"%`);
+    if (row) {
+      // @ts-ignore
+      return row.name;
+    } else {
+      return null;
+    }
+  }
+
   text(name: string, key: string) {
     const row = this.db.prepare('SELECT text FROM names WHERE name = ?').get(name.toLowerCase());
 
     console.log(row);
-    
+
     //const text = row ? JSON.parse(row.text) : null;
     const text = null;
 
@@ -58,7 +70,7 @@ export class SQLiteDatabase {
     const row = this.db.prepare('SELECT contenthash FROM names WHERE name = ?').get(name.toLowerCase());
 
     console.log(row);
-    
+
     //const contenthash = row ? row.contenthash : null;
     const contenthash = null;
 

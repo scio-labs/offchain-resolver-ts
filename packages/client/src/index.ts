@@ -22,65 +22,66 @@ const provider = new ethers.providers.JsonRpcProvider(options.provider, {
 });
 
 // Define the ENS resolver contract address for now, will add dynamic resolution if needed
-const ensResolverAddress = '0x4dBFD41eA7639eB5FbC95e4D2Ea63369e7Be143f';
+const ensResolverAddress = '0x8464135c8F25Da09e49BC8782676a84730C318bC';
+// const ensResolverAddress = '0x4dBFD41eA7639eB5FbC95e4D2Ea63369e7Be143f';
 
 const returnAbi = [
-    {
-      "constant": false,
-      "inputs": [
-        {
-          "name": "sender",
-          "type": "address"
-        },
-        {
-          "name": "urls",
-          "type": "string[]"
-        },
-        {
-          "name": "callData",
-          "type": "bytes"
-        },
-        {
-          "name": "callbackFunction",
-          "type": "bytes4"
-        },
-        {
-          "name": "extraData",
-          "type": "bytes"
-        }
-      ],
-      "name": "OffchainLookup",
-      "outputs": [],
-      "payable": false,
-      "stateMutability": "nonpayable",
-      "type": "function"
-    }
-  ];
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address"
+      },
+      {
+        "name": "urls",
+        "type": "string[]"
+      },
+      {
+        "name": "callData",
+        "type": "bytes"
+      },
+      {
+        "name": "callbackFunction",
+        "type": "bytes4"
+      },
+      {
+        "name": "extraData",
+        "type": "bytes"
+      }
+    ],
+    "name": "OffchainLookup",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
-  const decodeAbi = [
-    {
-      "constant": true,
-      "inputs": [],
-      "name": "decode",
-      "outputs": [
-        {
-          "name": "address",
-          "type": "bytes"
-        },
-        {
-          "name": "time",
-          "type": "uint64"
-        },
-        {
-          "name": "sig",
-          "type": "bytes"
-        }
-      ],
-      "payable": false,
-      "stateMutability": "view",
-      "type": "function"
-    }
-  ]; 
+const decodeAbi = [
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "decode",
+    "outputs": [
+      {
+        "name": "address",
+        "type": "bytes"
+      },
+      {
+        "name": "time",
+        "type": "uint64"
+      },
+      {
+        "name": "sig",
+        "type": "bytes"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
 
 (async () => {
   const name = program.args[0];

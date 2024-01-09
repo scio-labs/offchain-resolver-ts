@@ -12,7 +12,7 @@ import cors from '@fastify/cors';
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
 
-const db: SQLiteDatabase =  new SQLiteDatabase(
+const db: SQLiteDatabase = new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'
 );
 
@@ -51,6 +51,12 @@ app.get('/checkname/:name', async (request, reply) => {
   } else {
     return "available";
   }
+});
+
+app.get('/name/:address', async (request, reply) => {
+  const address = request.params.address;
+  const nameFromAddress = db.getNameFromAddress(address);
+  return nameFromAddress
 });
 
 app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
