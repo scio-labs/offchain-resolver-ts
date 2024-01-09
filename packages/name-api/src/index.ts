@@ -1,26 +1,20 @@
 // @ts-nocheck
 import fastify from "fastify";
 import { ethers } from "ethers";
-import { JSONDatabase } from "./json";
+import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
 import https from 'https';
-import { PRIVATE_KEY, JSON_DB_FILE, PATH_TO_CERT } from "./constants";
+
+import { PRIVATE_KEY, SQLite_DB_FILE, PATH_TO_CERT } from "./constants";
+
 import cors from '@fastify/cors';
-import Database from 'better-sqlite3';
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
 
-const db = new Database('ensnames.db', { verbose: console.log });
-
-const createTable = db.prepare(`
-  CREATE TABLE IF NOT EXISTS ensnames (
-    name TEXT PRIMARY KEY,
-    tba TEXT NOT NULL
-  )
-`);
-
-createTable.run();
+const db: SQLiteDatabase = JSONDatabase.fromFilename(
+  SQLite_DB_FILE, // e.g. 'ensnames.db'
+);
 
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
@@ -52,18 +46,16 @@ const testCatsContract = new ethers.Contract(testContractAddress, [
 
 app.get('/checkname/:name', async (request, reply) => {
   const name = request.params.name;
-  const ensname = db.prepare('SELECT * FROM ensnames WHERE id = ?').get(name);
-  if (!ensname) {
+  if (!db.checkAvailable(name)) {
     return "unavailable";
   } else {
     return "available";
   }
 });
 
-app.post('/:name/:tokenId/:tba/:signature', async (request, reply) => {
-  const { name, tokenId, tba, signature } = request.params;
-  // first check if name is taken
-  if (!db.prepare('SELECT * FROM ensnames WHERE name = ?').get(name)) {
+app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
+  const { name, tokenId, tbaAccount, signature } = request.params;
+  if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
@@ -72,20 +64,9 @@ app.post('/:name/:tokenId/:tba/:signature', async (request, reply) => {
     //now determine if user owns the NFT
     const userOwns = await userOwnsNFT(applyerAddress, tokenId);
     if (userOwns) {
-      //make entry in the database
-      //calculate TBA address
-      /*const tokenboundAccount = tokenboundClient.getAccount({
-        tokenContract: testContractAddress,
-        tokenId: tokenId,
-      })*/
-
-      console.log("TBA: " + tba);
-
-      const insertNameRecord = db.prepare('INSERT INTO ensnames (name, tba) VALUES (?, ?)');
-      const result = insertItem.run(id, name);
-
+      console.log("TBA: " + tbaAccount);
+      const retVal: string = db.addElement(name, tbaAccount);
       return "pass";
-
     } else {
       return "fail: User does not own NFT";
     }
@@ -119,6 +100,8 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
   const wallet = new ethers.Wallet(PRIVATE_KEY);
 
   //let signature = await signer.sign( "YOLESS" );
+
+  
 
   // Sign the message
   const signature = await wallet.signMessage(message);

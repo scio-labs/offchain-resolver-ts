@@ -76,7 +76,7 @@ export class JSONDatabase {
     const fullName = name + ".smartcat.eth";
     const nameData = this.findName(fullName);
     if (!nameData || !nameData.addresses) {
-      
+
       let text = `{
             "addresses": {
                 "60": "${address}"
