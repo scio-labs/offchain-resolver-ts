@@ -1,9 +1,10 @@
 import { Server } from '@chainlink/ccip-read-server';
 import { ethers, BytesLike } from 'ethers';
 import { hexConcat, Result } from 'ethers/lib/utils';
-import { ETH_COIN_TYPE } from './utils';
+// import { ETH_COIN_TYPE } from './utils';
 import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json';
+import fetch from 'node-fetch';
 const Resolver = new ethers.utils.Interface(Resolver_abi);
 
 interface DatabaseResult {
@@ -46,9 +47,19 @@ const queryHandlers: {
     args: Result
   ) => Promise<DatabaseResult>;
 } = {
+  // @ts-ignore
   'addr(bytes32)': async (db, name, _args) => {
-    const { addr, ttl } = await db.addr(name, ETH_COIN_TYPE);
-    return { result: [addr], ttl };
+    console.log(".A")
+    // const { addr, ttl } = await db.addr(name, ETH_COIN_TYPE);
+    // return { result: [addr], ttl };
+    try {
+      const addrReq = await fetch(`http://192.168.1.12:8083/addr/${name}`);
+      const resp = await addrReq.json();
+      console.log('addr', resp.addr);
+      return { result: [resp.addr], ttl: 300, isSQL: true };
+    } catch (error) {
+      console.log('error', error);
+    }
   },
   'addr(bytes32,uint256)': async (db, name, args) => {
     const { addr, ttl } = await db.addr(name, args[0]);

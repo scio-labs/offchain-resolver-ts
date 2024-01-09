@@ -72,19 +72,19 @@ app.get('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
-    // const applyerAddress = await recoverAddress(name, tokenId, signature);
-    // console.log("APPLY: " + applyerAddress);
-    // //now determine if user owns the NFT
-    // const userOwns = await userOwnsNFT(applyerAddress, tokenId);
-    // if (userOwns) {
-    //   console.log("TBA: " + tbaAccount);
-    //   const retVal: string = db.addElement(name, tbaAccount);
-    //   return "pass";
-    // } else {
-    //   return "fail: User does not own NFT";
-    // }
-    const retVal: string = db.addElement(name, tbaAccount);
-    return "pass";
+    const applyerAddress = await recoverAddress(name, tokenId, signature);
+    console.log("APPLY: " + applyerAddress);
+    //now determine if user owns the NFT
+    const userOwns = await userOwnsNFT(applyerAddress, tokenId);
+    if (userOwns) {
+      console.log("TBA: " + tbaAccount);
+      const retVal: string = db.addElement(name, tbaAccount);
+      return "pass";
+    } else {
+      return "fail: User does not own NFT";
+    }
+    // const retVal: string = db.addElement(name, tbaAccount);
+    // return "pass";
   }
 });
 
