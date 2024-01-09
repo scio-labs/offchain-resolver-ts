@@ -122,11 +122,11 @@ const returnAbi = [
           return ethers.utils.getAddress(ethers.utils.hexStripZeros(decoded.address));
         }
       } catch (callError) {
-        console.error(`Failed to call URL: ${callError}`);
+        // nop, expected
       }
     }
 
-    return '';
+    return ethers.constants.AddressZero;
   }
 
 
