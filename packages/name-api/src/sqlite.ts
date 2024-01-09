@@ -3,13 +3,9 @@ import BetterSqlite3 from 'better-sqlite3';
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
 
-//const db = Database;// new Database('../ensnames.db', { verbose: console.log });
-
 export class SQLiteDatabase {
 
   db: BetterSqlite3.Database;
-
-  //db: Database = new SQLiteDb('foobar.db', { verbose: console.log });
 
   constructor(dbName: string) {
     this.db = new BetterSqlite3(dbName, { verbose: console.log });
@@ -24,12 +20,8 @@ export class SQLiteDatabase {
     `);
   }
 
-  addr(name: string, coinType: 60) {
+  addr(name: string, coinType = 60) {
     const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
-
-    console.log(row);
-
-    // const addresses = null;
 
     // @ts-ignore
     const addresses = row ? JSON.parse(row.addresses) : null;
@@ -86,6 +78,7 @@ export class SQLiteDatabase {
     return !row;
   }
 
+  // TODO stop users from having more than 10 names
   addElement(name: string, address: string, chainId: 137) {
     const fullName = name.toLowerCase() + '.smartcat.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);

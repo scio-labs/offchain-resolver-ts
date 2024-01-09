@@ -53,29 +53,38 @@ app.get('/checkname/:name', async (request, reply) => {
   }
 });
 
+// input: tokenbound address
 app.get('/name/:address', async (request, reply) => {
   const address = request.params.address;
   const nameFromAddress = db.getNameFromAddress(address);
   return nameFromAddress
 });
 
-app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
+app.get('/addr/:name', async (request, reply) => {
+  const name = request.params.name;
+  const addressFromName = db.addr(name);
+  return addressFromName
+});
+
+app.get('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
   const { name, tokenId, tbaAccount, signature } = request.params;
   if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
-    const applyerAddress = await recoverAddress(name, tokenId, signature);
-    console.log("APPLY: " + applyerAddress);
-    //now determine if user owns the NFT
-    const userOwns = await userOwnsNFT(applyerAddress, tokenId);
-    if (userOwns) {
-      console.log("TBA: " + tbaAccount);
-      const retVal: string = db.addElement(name, tbaAccount);
-      return "pass";
-    } else {
-      return "fail: User does not own NFT";
-    }
+    // const applyerAddress = await recoverAddress(name, tokenId, signature);
+    // console.log("APPLY: " + applyerAddress);
+    // //now determine if user owns the NFT
+    // const userOwns = await userOwnsNFT(applyerAddress, tokenId);
+    // if (userOwns) {
+    //   console.log("TBA: " + tbaAccount);
+    //   const retVal: string = db.addElement(name, tbaAccount);
+    //   return "pass";
+    // } else {
+    //   return "fail: User does not own NFT";
+    // }
+    const retVal: string = db.addElement(name, tbaAccount);
+    return "pass";
   }
 });
 
