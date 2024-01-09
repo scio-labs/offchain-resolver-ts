@@ -60,19 +60,18 @@ export class SQLiteDatabase {
     return !row;
   }
 
-  addElement(name: string, address: string) {
+  addElement(name: string, address: string, chainId: 137) {
     const fullName = name.toLowerCase() + '.smartcat.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
     const addresses = { 60: address };
-    // TODO - how is this created?
+    // TODO - confirm the correct approach to manage off chain content not on IPFS or 
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
-
     if (!existingRow) {
-      const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash) VALUES (?, ?, ?)');
-      stmt.run(fullName, JSON.stringify(addresses), contenthash);
+      const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
+      stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
     } else {
-      const stmt = this.db.prepare('UPDATE names SET addresses = ?, contenthash = ? WHERE name = ?');
-      stmt.run(JSON.stringify(addresses), contenthash, fullName);
+      const stmt = this.db.prepare('UPDATE names SET addresses = ?, contenthash = ?, chain_id = ? WHERE name = ?');
+      stmt.run(JSON.stringify(addresses), contenthash, chainId, fullName);
     }
   }
 }
