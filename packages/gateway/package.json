@@ -63,7 +63,7 @@
     "@types/cors": "^2.8.17",
     "commander": "^8.3.0",
     "cors": "^2.8.5",
-    "dotenv": "^15.0.0",
+    "dotenv": "^16.3.1",
     "ethers": "^5.7.2",
     "node-fetch2": "^1.6.3"
   }

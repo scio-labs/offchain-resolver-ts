@@ -42,43 +42,51 @@ function decodeDnsName(dnsname: Buffer) {
 
 const queryHandlers: {
   [key: string]: (
-    db: Database,
+    dataPath: string,
     name: string,
+    ttlVal: number,
     args: Result
   ) => Promise<DatabaseResult>;
 } = {
   // @ts-ignore
-  'addr(bytes32)': async (db, name, _args) => {
+  'addr(bytes32)': async (dataPath, name, ttlVal, _args) => {
     console.log(".A")
     // const { addr, ttl } = await db.addr(name, ETH_COIN_TYPE);
     // return { result: [addr], ttl };
     try {
-      const addrReq = await fetch(`http://scriptproxy.smarttokenlabs.com:8083/addr/${name}`);
+      const addrReq = await fetch(`${dataPath}/addr/${name}`);
       const resp = await addrReq.json();
       // @ts-ignore
       console.log('addr', resp.addr);
       // @ts-ignore
-      return { result: [resp.addr], ttl: 300, isSQL: true };
+      return { result: [resp.addr], ttl:ttlVal };
     } catch (error) {
       console.log('error', error);
     }
   },
-  'addr(bytes32,uint256)': async (db, name, args) => {
-    const { addr, ttl } = await db.addr(name, args[0]);
-    return { result: [addr], ttl };
+  // @ts-ignore
+  'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => {
+    //const { addr, ttl } = await db.addr(name, args[0]);
+    const addr = null;
+    return { result: [addr], ttl:ttlVal };
   },
-  'text(bytes32,string)': async (db, name, args) => {
-    const { value, ttl } = await db.text(name, args[0]);
-    return { result: [value], ttl };
+  // @ts-ignore
+  'text(bytes32,string)': async (dataPath, name, ttlVal, args) => {
+    //const { value, ttl } = await db.text(name, args[0]);
+    const value = null;
+    return { result: [value], ttl:ttlVal };
   },
-  'contenthash(bytes32)': async (db, name, _args) => {
-    const { contenthash, ttl } = await db.contenthash(name);
-    return { result: [contenthash], ttl };
+  // @ts-ignore
+  'contenthash(bytes32)': async (dataPath, name, ttlVal, _args) => {
+    //const { contenthash, ttl } = await db.contenthash(name);
+    const contenthash = null;
+    return { result: [contenthash], ttl:ttlVal };
   },
 };
 
 async function query(
-  db: Database,
+  dataPath: string,
+  ttlVal: number,
   name: string,
   data: string
 ): Promise<{ result: BytesLike; validUntil: number }> {
@@ -98,14 +106,14 @@ async function query(
     throw new Error(`Unsupported query function ${signature}`);
   }
 
-  const { result, ttl } = await handler(db, name, args.slice(1));
+  const { result, ttl } = await handler(dataPath, name, ttlVal, args.slice(1));
   return {
     result: Resolver.encodeFunctionResult(signature, result),
     validUntil: Math.floor(Date.now() / 1000 + ttl),
   };
 }
 
-export function makeServer(signer: ethers.utils.SigningKey, db: Database) {
+export function makeServer(signer: ethers.utils.SigningKey, dataPath: string, ttl: number) {
   const server = new Server();
   server.add(IResolverService_abi, [
     {
@@ -114,7 +122,7 @@ export function makeServer(signer: ethers.utils.SigningKey, db: Database) {
         const name = decodeDnsName(Buffer.from(encodedName.slice(2), 'hex'));
         console.log("Request: " + name);
         // Query the database
-        const { result, validUntil } = await query(db, name, data);
+        const { result, validUntil } = await query(dataPath, ttl, name, data);
 
         console.log("Request from DB: " + result + " : " + validUntil);
 
@@ -137,11 +145,12 @@ export function makeServer(signer: ethers.utils.SigningKey, db: Database) {
   ]);
   return server;
 }
-
+//signer, '/', DATABASE_CONNECTION, TTL
 export function makeApp(
   signer: ethers.utils.SigningKey,
   path: string,
-  db: Database
+  dataPath: string,
+  ttl: number
 ) {
-  return makeServer(signer, db).makeApp(path);
+  return makeServer(signer, dataPath, ttl).makeApp(path);
 }
