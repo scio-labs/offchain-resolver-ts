@@ -66,7 +66,7 @@ app.get('/addr/:name', async (request, reply) => {
   return addressFromName
 });
 
-app.get('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
+app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
   const { name, tokenId, tbaAccount, signature } = request.params;
   if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";

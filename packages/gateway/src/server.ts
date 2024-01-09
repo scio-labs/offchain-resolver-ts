@@ -5,6 +5,10 @@ import { hexConcat, Result } from 'ethers/lib/utils';
 import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json';
 import fetch from 'node-fetch';
+import { Agent } from 'https';
+
+const agent = new Agent({ rejectUnauthorized: false });
+
 const Resolver = new ethers.utils.Interface(Resolver_abi);
 
 interface DatabaseResult {
@@ -53,10 +57,12 @@ const queryHandlers: {
     // const { addr, ttl } = await db.addr(name, ETH_COIN_TYPE);
     // return { result: [addr], ttl };
     try {
-      const addrReq = await fetch(`http://192.168.1.12:8083/addr/${name}`);
+      const addrReq = await fetch(`https://scriptproxy.smarttokenlabs.com:8083/addr/${name}`, { agent });
       const resp = await addrReq.json();
+      // @ts-ignore
       console.log('addr', resp.addr);
-      return { result: [resp.addr], ttl: 300, isSQL: true };
+      // @ts-ignore
+      return { result: [resp.addr], ttl: 300 };
     } catch (error) {
       console.log('error', error);
     }
