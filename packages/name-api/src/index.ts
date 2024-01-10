@@ -72,6 +72,7 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
+    try {
     const applyerAddress = await recoverAddress(name, tokenId, signature);
     console.log("APPLY: " + applyerAddress);
     //now determine if user owns the NFT
@@ -85,13 +86,16 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     }
     // const retVal: string = db.addElement(name, tbaAccount);
     // return "pass";
+  } catch (error) {
+    return "Fail: invalid signature";
+  }
   }
 });
 
 async function recoverAddress(catName: string, tokenId: string, signature: string): string {
   const message = `Registering your catId ${tokenId} name to ${catName}`;
   console.log("MSG: " + message);
-  const signerAddress = ethers.verifyMessage(message, signature);
+  const signerAddress = ethers.verifyMessage(message, addHexPrefix(signature));
   return signerAddress;
 }
 
@@ -104,6 +108,14 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
   } else {
     console.log("Doesn't own");
     return false;
+  }
+}
+
+function addHexPrefix(hex: string): string {
+  if (hex.startsWith('0x')) {
+      return hex;
+  } else {
+      return '0x' + hex;
   }
 }
 
