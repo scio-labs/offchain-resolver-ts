@@ -85,9 +85,9 @@ export class SQLiteDatabase {
     // @ts-ignore
     const totalEntries = this.db.prepare('SELECT COUNT(*) as count FROM names').get().count;
 
-    if (totalEntries >= 10) {
+    if (totalEntries >= 1) {
       // Decide what to do when the limit is reached, e.g., replace an existing entry or do nothing
-      console.warn('Limit of 10 entries reached. Skipping addition of a new entry.');
+      console.warn('Limit of 1 entrie(s) reached. Skipping addition of a new entry.');
       return;
     }
 
