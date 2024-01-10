@@ -19,22 +19,11 @@ const db: SQLiteDatabase = new SQLiteDatabase(
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
-var app;
+console.log(`Path to Cert: ${PATH_TO_CERT}`);
 
-if (PATH_TO_CERT) {
-  app = fastify({
-    maxParamLength: 1024,
-    https: {
-      key: fs.readFileSync('./privkey.pem'),
-      cert: fs.readFileSync('./cert.pem')
-    }
-  });
-} else {
-  console.log("No Cert");
-  app = fastify({
-    maxParamLength: 1024
-  });
-}
+const app = fastify({
+  maxParamLength: 1024
+});
 
 await app.register(cors, {
   origin: true
@@ -72,6 +61,7 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
+    try {
     const applyerAddress = await recoverAddress(name, tokenId, signature);
     console.log("APPLY: " + applyerAddress);
     //now determine if user owns the NFT
@@ -85,13 +75,16 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
     }
     // const retVal: string = db.addElement(name, tbaAccount);
     // return "pass";
+  } catch (error) {
+    return "Fail: invalid signature";
+  }
   }
 });
 
 async function recoverAddress(catName: string, tokenId: string, signature: string): string {
   const message = `Registering your catId ${tokenId} name to ${catName}`;
   console.log("MSG: " + message);
-  const signerAddress = ethers.verifyMessage(message, signature);
+  const signerAddress = ethers.verifyMessage(message, addHexPrefix(signature));
   return signerAddress;
 }
 
@@ -104,6 +97,14 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
   } else {
     console.log("Doesn't own");
     return false;
+  }
+}
+
+function addHexPrefix(hex: string): string {
+  if (hex.startsWith('0x')) {
+      return hex;
+  } else {
+      return '0x' + hex;
   }
 }
 
