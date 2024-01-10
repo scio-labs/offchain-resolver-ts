@@ -1,5 +1,6 @@
 import { Command } from 'commander';
 import ethers from 'ethers';
+//@ts-ignore
 import fetch from 'node-fetch';
 
 const program = new Command();
@@ -22,9 +23,10 @@ const provider = new ethers.providers.JsonRpcProvider(options.provider, {
 });
 
 // Define the ENS resolver contract address for now, will add dynamic resolution if needed
-const ensResolverAddress = '0x8464135c8F25Da09e49BC8782676a84730C318bC';
-// const ensResolverAddress = '0x4dBFD41eA7639eB5FbC95e4D2Ea63369e7Be143f';
+//const ensResolverAddress = '0x8464135c8F25Da09e49BC8782676a84730C318bC';
+const ensResolverAddress = '0x02957D5823c1C973f2075d870985c856b6D1b93E';
 
+//@ts-ignore
 const returnAbi = [
   {
     "constant": false,
@@ -58,6 +60,7 @@ const returnAbi = [
   }
 ];
 
+//@ts-ignore
 const decodeAbi = [
   {
     "constant": true,
@@ -95,7 +98,8 @@ const decodeAbi = [
     const funcEncode = "0x3b3b57de" + namehash.substring(2);
 
     const catResolver = new ethers.Contract(resolverAddress, [
-      'function resolve(bytes name, bytes data) view returns (bytes)'
+      'function resolve(bytes name, bytes data) view returns (bytes)',
+      'function resolveWithProof(bytes calldata response, bytes calldata extraData) external view returns(bytes memory)'
     ], provider);
 
     //call, get error
@@ -106,6 +110,7 @@ const decodeAbi = [
       //break down the data
       const iface = new ethers.utils.Interface(returnAbi);
       const decoded = iface.decodeFunctionData('OffchainLookup', error.data);
+      
 
       //format URL:
       const callUrl = decoded.urls[0].replace('{sender}', decoded.sender).replace('{data}', decoded.callData);
@@ -116,14 +121,18 @@ const decodeAbi = [
         if (response.ok) {
           const data = await response.json();
 
-          //split up the response data
-          const decode = new ethers.utils.Interface(decodeAbi);
-          const decoded = decode.decodeFunctionResult('decode', data.data);
+          //response1
+          const proofResponse = data.data;
+          const extraData = decoded.extraData;
 
-          console.log("Len: " + decoded.address.length);
-          var truncated = decoded.address;
-          if (decoded.address.length > 42) {
-            truncated = "0x" + decoded.address.substring(decoded.address.length - 40);
+          //now call proof
+          const proofReturn = await catResolver.resolveWithProof(proofResponse, extraData);
+          console.log(proofReturn);
+
+          console.log("Len: " + proofReturn.length);
+          var truncated = proofReturn;
+          if (proofReturn.length > 42) {
+            truncated = "0x" + proofReturn.substring(proofReturn.length - 40);
           }
 
           console.log("Truncated: " + truncated);
