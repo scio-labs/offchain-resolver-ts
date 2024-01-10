@@ -21,9 +21,22 @@ const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
 console.log(`Path to Cert: ${PATH_TO_CERT}`);
 
-const app = fastify({
-  maxParamLength: 1024
-});
+var app;
+
+if (PATH_TO_CERT) {
+  app = fastify({
+    maxParamLength: 1024,
+    https: {
+      key: fs.readFileSync('./privkey.pem'),
+      cert: fs.readFileSync('./cert.pem')
+    }
+  });
+} else {
+  console.log("No Cert");
+  app = fastify({
+    maxParamLength: 1024
+  });
+}
 
 await app.register(cors, {
   origin: true
