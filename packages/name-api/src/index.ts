@@ -1,63 +1,90 @@
 // @ts-nocheck
-import { fastify } from 'fastify';
-import { Command } from 'commander';
-import { ethers, utils } from 'ethers';
-import { JSONDatabase } from './json';
+import fastify from "fastify";
+import { ethers } from "ethers";
+import { SQLiteDatabase } from "./sqlite";
+import fs from 'fs';
+import https from 'https';
 
-const program = new Command();
-program
-  .requiredOption(
-    '-k --private-key <key>',
-    'Private key to sign responses with. Prefix with @ to read from a file'
-  )
-  .requiredOption('-d --data <file>', 'JSON file to read data from');
-program.parse(process.argv);
-const options = program.opts();
-const privateKey: string = options.privateKey;
+import { PRIVATE_KEY, SQLite_DB_FILE, PATH_TO_CERT } from "./constants";
 
-const address: string = ethers.computeAddress(privateKey);
-const signer: ethers.SigningKey = new ethers.SigningKey(privateKey);
-const db: JSONDatabase = JSONDatabase.fromFilename(options.data, parseInt(options.ttl, 10));
+import cors from '@fastify/cors';
+
+const address: string = ethers.computeAddress(PRIVATE_KEY);
+const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
+
+const db: SQLiteDatabase = new SQLiteDatabase(
+  SQLite_DB_FILE, // e.g. 'ensnames.db'
+);
+
 const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
-
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
+
+console.log(`Path to Cert: ${PATH_TO_CERT}`);
 
 const app = fastify({
   maxParamLength: 1024
 });
 
+await app.register(cors, {
+  origin: true
+})
+
 const testCatsContract = new ethers.Contract(testContractAddress, [
   'function ownerOf(uint256 tokenId) view returns (address)'
 ], provider);
 
-app.get('/', async () => {
-  return 'hello world';
+app.get('/checkname/:name', async (request, reply) => {
+  const name = request.params.name;
+  if (!db.checkAvailable(name)) {
+    return "unavailable";
+  } else {
+    return "available";
+  }
 });
 
-app.get('/:name/:tokenId/:signature', async (request, reply) => {
-  const { name, tokenId, signature } = request.params;
-  // first check if name is taken
+// input: tokenbound address
+app.get('/name/:address', async (request, reply) => {
+  const address = request.params.address;
+  const nameFromAddress = db.getNameFromAddress(address);
+  return nameFromAddress
+});
+
+app.get('/addr/:name', async (request, reply) => {
+  const name = request.params.name;
+  const addressFromName = db.addr(name);
+  return addressFromName
+});
+
+app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
+  const { name, tokenId, tbaAccount, signature } = request.params;
   if (!db.checkAvailable(name)) {
     return "Fail: Name Unavailable";
   } else {
     // do ecrecover
-    genSig();
+    try {
     const applyerAddress = await recoverAddress(name, tokenId, signature);
-    console.log(applyerAddress);
+    console.log("APPLY: " + applyerAddress);
     //now determine if user owns the NFT
     const userOwns = await userOwnsNFT(applyerAddress, tokenId);
     if (userOwns) {
+      console.log("TBA: " + tbaAccount);
+      const retVal: string = db.addElement(name, tbaAccount);
       return "pass";
     } else {
       return "fail: User does not own NFT";
     }
+    // const retVal: string = db.addElement(name, tbaAccount);
+    // return "pass";
+  } catch (error) {
+    return "Fail: invalid signature";
+  }
   }
 });
 
 async function recoverAddress(catName: string, tokenId: string, signature: string): string {
   const message = `Registering your catId ${tokenId} name to ${catName}`;
   console.log("MSG: " + message);
-  const signerAddress = ethers.verifyMessage(message, signature);
+  const signerAddress = ethers.verifyMessage(message, addHexPrefix(signature));
   return signerAddress;
 }
 
@@ -73,12 +100,20 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
   }
 }
 
-async function genSig() {
+function addHexPrefix(hex: string): string {
+  if (hex.startsWith('0x')) {
+      return hex;
+  } else {
+      return '0x' + hex;
+  }
+}
+
+/*async function genSig() {
   // The message you want to sign
 
   const message = 'gonzo2,134';
 
-  const wallet = new ethers.Wallet(privateKey);
+  const wallet = new ethers.Wallet(PRIVATE_KEY);
 
   //let signature = await signer.sign( "YOLESS" );
 
@@ -92,12 +127,12 @@ async function genSig() {
   const signerAddress = ethers.verifyMessage(message, signature);
 
   console.log(`Recovered address: ${signerAddress}`);
-}
+}*/
 
 const start = async () => {
 
   try {
-    await app.listen({ port: 8083 });
+    await app.listen({ port: 8083, host: '0.0.0.0' });
     console.log(`Server is listening on ${app.server?.address().port}`);
   } catch (err) {
     console.log(err);

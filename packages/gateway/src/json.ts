@@ -12,6 +12,8 @@ type ZoneData = { [name: string]: NameData };
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
 
+let jFileName: string;
+
 export class JSONDatabase implements Database {
   data: ZoneData;
   ttl: number;
@@ -29,6 +31,7 @@ export class JSONDatabase implements Database {
   }
 
   static fromFilename(filename: string, ttl: number) {
+    jFileName = filename;
     return new JSONDatabase(
       JSON.parse(readFileSync(filename, { encoding: 'utf-8' })),
       ttl
@@ -36,6 +39,8 @@ export class JSONDatabase implements Database {
   }
 
   addr(name: string, coinType: number) {
+    //must re-load each time, as the other server can update data
+    this.data = JSON.parse(readFileSync(jFileName, { encoding: 'utf-8' }));
     const nameData = this.findName(name);
     if (!nameData || !nameData.addresses || !nameData.addresses[coinType]) {
       return { addr: ZERO_ADDRESS, ttl: this.ttl };

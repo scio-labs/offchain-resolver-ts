@@ -8,5 +8,9 @@ module.exports = async ({deployments}) => {
     await registry.setSubnodeOwner("0x0000000000000000000000000000000000000000000000000000000000000000", ethers.utils.id('eth'), owner, {from: owner});
     await registry.setSubnodeOwner(ethers.utils.namehash('eth'), ethers.utils.id('test'), owner, {from: owner});
     await registry.setResolver(ethers.utils.namehash('test.eth'), resolver.address, {from: owner});
+    await registry.setSubnodeOwner(ethers.utils.namehash('eth'), ethers.utils.id('smartcat'), owner, {from: owner});
+    console.log(`Node: ${ethers.utils.namehash('eth')} label: ${ethers.utils.id('smartcat')} owner: ${owner}`  );
+    await registry.setResolver(ethers.utils.namehash('smartcat.eth'), resolver.address, {from: owner});
+    console.log(`Node: ${ethers.utils.namehash('smartcat.eth')} resolver: ${resolver.address} owner: ${owner}`  );
 };
 module.exports.tags = ['test'];

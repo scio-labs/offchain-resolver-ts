@@ -21,15 +21,19 @@
   },
   "homepage": "https://github.com/nicktaras/fastify-better-sqllite-server#readme",
   "dependencies": {
+    "@fastify/cors": "^8.5.0",
+    "@tokenbound/sdk": "^0.4.5",
+    "@types/better-sqlite3": "^7.6.8",
     "better-sqlite3": "^9.2.2",
     "commander": "^11.1.0",
+    "dotenv": "^16.3.1",
     "ethers": "^6.9.2",
     "fastify": "4.10.2",
     "json": "^11.0.0",
     "typescript": "^4.7.4"
   },
   "devDependencies": {
-    "ts-node": "^10.9.2",
-    "@vercel/ncc": "^0.36.0"
+    "@vercel/ncc": "^0.36.0",
+    "ts-node": "^10.9.2"
   }
 }
