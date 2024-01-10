@@ -79,7 +79,9 @@ export class SQLiteDatabase {
   }
 
   addElement(name: string, address: string, chainId: 137) {
-    const fullName = name.toLowerCase() + '.smartcat.eth';
+    const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
+    const truncatedText = santisedName.slice(0, 255); // limit name to 255
+    const fullName = truncatedText + '.thesmartcats.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
 
     // @ts-ignore
