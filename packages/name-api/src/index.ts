@@ -4,7 +4,7 @@ import {ethers} from "ethers";
 import {SQLiteDatabase} from "./sqlite";
 import fs from 'fs';
 
-import {CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE} from "./constants";
+import {CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE} from "./constants";
 
 import cors from '@fastify/cors';
 import {getTokenBoundAccount} from "./tokenBound";
@@ -15,9 +15,6 @@ const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
 const db: SQLiteDatabase = new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'
 );
-
-const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
-const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
 console.log(`Path to Cert: ${PATH_TO_CERT}`);
 
@@ -42,10 +39,6 @@ await app.register(cors, {
   origin: true
 })
 
-const testCatsContract = new ethers.Contract(testContractAddress, [
-  'function ownerOf(uint256 tokenId) view returns (address)'
-], provider);
-
 app.get('/checkname/:name', async (request, reply) => {
   const name = request.params.name;
   if (!db.checkAvailable(name)) {
@@ -66,11 +59,11 @@ app.get('/addr/:name', async (request, reply) => {
   return db.addr(name)
 });
 
-app.post('/:chainId/:tokenContract/:tokenId/:name/:tbaAccount/:signature', async (request, reply) => {
+app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (request, reply) => {
 
   const { chainId, tokenContract, tokenId, name, signature } = request.params;
 
-  const config = CONTRACT_CONFIG[chainId + "-" + tokenContract];
+  const config = CONTRACT_CONFIG[chainId + "-" + tokenContract.toLowerCase()];
 
   if (!config)
     return reply.status(400).send("Invalid chain and address combination");
@@ -82,7 +75,7 @@ app.post('/:chainId/:tokenContract/:tokenId/:name/:tbaAccount/:signature', async
   console.log("APPLY: " + applyerAddress);
 
   //now determine if user owns the NFT
-  const userOwns = userOwnsNFT(applyerAddress, tokenId);
+  const userOwns = await userOwnsNFT(chainId, tokenContract, applyerAddress, tokenId);
 
   if (userOwns) {
 
@@ -107,7 +100,19 @@ function recoverAddress(catName: string, tokenId: string, signature: string): st
   return ethers.verifyMessage(message, addHexPrefix(signature));
 }
 
-async function userOwnsNFT(applyerAddress: string, tokenId: string): Promise<boolean> {
+async function userOwnsNFT(chainId: number, contractAddress: string, applyerAddress: string, tokenId: string): Promise<boolean> {
+
+  const chainConfig = CHAIN_CONFIG[chainId];
+
+  if (!chainId)
+    throw new Error("Missing chain config");
+
+  const provider = new ethers.JsonRpcProvider(chainConfig.rpcUrl);
+
+  const testCatsContract = new ethers.Contract(contractAddress, [
+    'function ownerOf(uint256 tokenId) view returns (address)'
+  ], provider);
+
   const owner = await testCatsContract.ownerOf(tokenId);
   console.log("Owner: " + owner);
   if (owner === applyerAddress) {
