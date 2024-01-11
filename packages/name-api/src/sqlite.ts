@@ -86,7 +86,7 @@ export class SQLiteDatabase {
 
     // uses different ENS based on the ENV flag
     let fullName = truncatedText + '.smartcat.eth'; // STAGING version.
-    if (process.env.NODE_ENV === "PRODUCTION") fullName = truncatedText + '.thesmartcats.eth';
+    if (process.env.NODE_ENV === "production") fullName = truncatedText + '.thesmartcats.eth';
 
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
     const addresses = { 60: address };
