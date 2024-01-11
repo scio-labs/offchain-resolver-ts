@@ -79,12 +79,14 @@ app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (r
 
   if (userOwns) {
 
-    const tbaAccount = getTokenBoundAccount(chainId, tokenContract, tokenId);
+    const chainInt = parseInt(chainId);
+
+    const tbaAccount = getTokenBoundAccount(chainInt, tokenContract, tokenId);
 
     console.log("TBA: " + tbaAccount);
 
     try {
-      db.addElement(config.baseName, name, tbaAccount, parseInt(chainId));
+      db.addElement(config.baseName, name, tbaAccount, chainInt);
       return reply.status(200).send("pass");
     } catch (e){
       return reply.status(400).send(e.message);
