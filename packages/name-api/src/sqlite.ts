@@ -1,4 +1,6 @@
 import BetterSqlite3 from 'better-sqlite3';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
@@ -81,8 +83,11 @@ export class SQLiteDatabase {
   addElement(name: string, address: string, chainId: 137) {
     const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
     const truncatedText = santisedName.slice(0, 255); // limit name to 255
-    const fullName = truncatedText + '.smartcat.eth';
-    // const fullName = truncatedText + '.thesmartcats.eth';
+
+    // uses different ENS based on the ENV flag
+    let fullName = truncatedText + '.smartcat.eth'; // STAGING version.
+    if (process.env.NODE_ENV === "PRODUCTION") fullName = truncatedText + '.thesmartcats.eth';
+
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
     const addresses = { 60: address };
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
