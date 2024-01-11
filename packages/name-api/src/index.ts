@@ -20,7 +20,7 @@ const db: SQLiteDatabase = new SQLiteDatabase(
 
 // PROD
 let provider = new ethers.JsonRpcProvider(`https://polygon-rpc.com/`);
-const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
+const testContractAddress = '0xD5cA946AC1c1F24Eb26dae9e1A53ba6a02bd97Fe';
 
 // TODO set up dotenv for Prod and Staging config
 
