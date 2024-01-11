@@ -25,7 +25,7 @@
 
 "@fastify/cors@^8.5.0":
   version "8.5.0"
-  resolved "https://registry.yarnpkg.com/@fastify/cors/-/cors-8.5.0.tgz#4e9be0d72bfaa63e0918fd43dedd046d9fb1c0d4"
+  resolved "https://registry.npmjs.org/@fastify/cors/-/cors-8.5.0.tgz"
   integrity sha512-/oZ1QSb02XjP0IK1U0IXktEsw/dUBTxJOW7IpIeO8c/tNalw/KjoNSJv1Sf6eqoBPO+TDGkifq6ynFK3v68HFQ==
   dependencies:
     fastify-plugin "^4.0.0"
@@ -73,24 +73,19 @@
   dependencies:
     "@noble/hashes" "1.3.2"
 
-"@noble/hashes@1.3.2":
+"@noble/hashes@1.3.2", "@noble/hashes@~1.3.0", "@noble/hashes@~1.3.2":
   version "1.3.2"
   resolved "https://registry.npmjs.org/@noble/hashes/-/hashes-1.3.2.tgz"
   integrity sha512-MVC8EAQp7MvEcm30KWENFjgR+Mkmf+D189XJTkFIlwohU5hcBbn1ZkKq7KVTi2Hme3PMGF390DaL52beVrIihQ==
 
-"@noble/hashes@~1.3.0", "@noble/hashes@~1.3.2":
-  version "1.3.3"
-  resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.3.3.tgz#39908da56a4adc270147bb07968bf3b16cfe1699"
-  integrity sha512-V7/fPHgl+jsVPXqqeOzT8egNj2iBIVt+ECeMMG8TdcnTikP3oaBtUVqpT/gYCR68aEBJSF+XbYUxStjbFMqIIA==
-
 "@scure/base@~1.1.0", "@scure/base@~1.1.2":
   version "1.1.5"
-  resolved "https://registry.yarnpkg.com/@scure/base/-/base-1.1.5.tgz#1d85d17269fe97694b9c592552dd9e5e33552157"
+  resolved "https://registry.npmjs.org/@scure/base/-/base-1.1.5.tgz"
   integrity sha512-Brj9FiG2W1MRQSTB212YVPRrcbjkv48FoZi/u4l/zds/ieRrqsh7aUf6CLwkAq61oKXr/ZlTzlY66gLIj3TFTQ==
 
 "@scure/bip32@1.3.2":
   version "1.3.2"
-  resolved "https://registry.yarnpkg.com/@scure/bip32/-/bip32-1.3.2.tgz#90e78c027d5e30f0b22c1f8d50ff12f3fb7559f8"
+  resolved "https://registry.npmjs.org/@scure/bip32/-/bip32-1.3.2.tgz"
   integrity sha512-N1ZhksgwD3OBlwTv3R6KFEcPojl/W4ElJOeCZdi+vuI5QmTFwLq3OFf2zd2ROpKvxFdgZ6hUpb0dx9bVNEwYCA==
   dependencies:
     "@noble/curves" "~1.2.0"
@@ -99,7 +94,7 @@
 
 "@scure/bip39@1.2.1":
   version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@scure/bip39/-/bip39-1.2.1.tgz#5cee8978656b272a917b7871c981e0541ad6ac2a"
+  resolved "https://registry.npmjs.org/@scure/bip39/-/bip39-1.2.1.tgz"
   integrity sha512-Z3/Fsz1yr904dduJD0NpiyRHhRYHdcnyh73FZWiV+/qhWi83wNJ3NWolYqCEN+ZWsUz2TWwajJggcRE9r1zUYg==
   dependencies:
     "@noble/hashes" "~1.3.0"
@@ -107,7 +102,7 @@
 
 "@tokenbound/sdk@^0.4.5":
   version "0.4.5"
-  resolved "https://registry.yarnpkg.com/@tokenbound/sdk/-/sdk-0.4.5.tgz#aee9d4d9c45b15c45c56f1b0e342dd4e058b44ff"
+  resolved "https://registry.npmjs.org/@tokenbound/sdk/-/sdk-0.4.5.tgz"
   integrity sha512-kfvvrYBOVVhuId74ZFkN6kd/YSTFQCUnOT/yv0L22fqIQVF0i58G0bYoSgQmmW2Yypv7AglIazKXFTRuwrnByg==
   dependencies:
     viem "^1.19.11"
@@ -134,19 +129,12 @@
 
 "@types/better-sqlite3@^7.6.8":
   version "7.6.8"
-  resolved "https://registry.yarnpkg.com/@types/better-sqlite3/-/better-sqlite3-7.6.8.tgz#d427903dd842a6f9585e0ff29a7f6a28ce791e2f"
+  resolved "https://registry.npmjs.org/@types/better-sqlite3/-/better-sqlite3-7.6.8.tgz"
   integrity sha512-ASndM4rdGrzk7iXXqyNC4fbwt4UEjpK0i3j4q4FyeQrLAthfB6s7EF135ZJE0qQxtKIMFwmyT6x0switET7uIw==
   dependencies:
     "@types/node" "*"
 
-"@types/node@*":
-  version "20.10.7"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.10.7.tgz#40fe8faf25418a75de9fe68a8775546732a3a901"
-  integrity sha512-fRbIKb8C/Y2lXxB5eVMj4IU7xpdox0Lh8bUPEdtLysaylsml1hOOx1+STloRs/B9nf7C6kPRmmg/V7aQW7usNg==
-  dependencies:
-    undici-types "~5.26.4"
-
-"@types/node@18.15.13":
+"@types/node@*", "@types/node@18.15.13":
   version "18.15.13"
   resolved "https://registry.npmjs.org/@types/node/-/node-18.15.13.tgz"
   integrity sha512-N+0kuo9KgrUQ1Sn/ifDXsvg0TTleP7rIy4zOBGECxAljqvqfqpTfzx0Q1NUedOixRMBfe2Whhb056a42cWs26Q==
@@ -158,7 +146,7 @@
 
 abitype@0.9.8:
   version "0.9.8"
-  resolved "https://registry.yarnpkg.com/abitype/-/abitype-0.9.8.tgz#1f120b6b717459deafd213dfbf3a3dd1bf10ae8c"
+  resolved "https://registry.npmjs.org/abitype/-/abitype-0.9.8.tgz"
   integrity sha512-puLifILdm+8sjyss4S+fsUN09obiT1g2YW6CtcQF+QDzxR0euzgEB29MZujC6zMk2a6SVmtttq1fc6+YFA7WYQ==
 
 abort-controller@^3.0.0:
@@ -236,7 +224,7 @@ base64-js@^1.3.1:
 
 better-sqlite3@^9.2.2:
   version "9.2.2"
-  resolved "https://registry.yarnpkg.com/better-sqlite3/-/better-sqlite3-9.2.2.tgz#3ce1ed24f327ed8c9b0c39b825cdc2341aeb249f"
+  resolved "https://registry.npmjs.org/better-sqlite3/-/better-sqlite3-9.2.2.tgz"
   integrity sha512-qwjWB46il0lsDkeB4rSRI96HyDQr8sxeu1MkBVLMrwusq1KRu4Bpt1TMI+8zIJkDUtZ3umjAkaEjIlokZKWCQw==
   dependencies:
     bindings "^1.5.0"
@@ -410,7 +398,7 @@ fast-uri@^2.0.0, fast-uri@^2.1.0:
 
 fastify-plugin@^4.0.0:
   version "4.5.1"
-  resolved "https://registry.yarnpkg.com/fastify-plugin/-/fastify-plugin-4.5.1.tgz#44dc6a3cc2cce0988bc09e13f160120bbd91dbee"
+  resolved "https://registry.npmjs.org/fastify-plugin/-/fastify-plugin-4.5.1.tgz"
   integrity sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==
 
 fastify@4.10.2:
@@ -492,7 +480,7 @@ ipaddr.js@1.9.1:
 
 isows@1.0.3:
   version "1.0.3"
-  resolved "https://registry.yarnpkg.com/isows/-/isows-1.0.3.tgz#93c1cf0575daf56e7120bab5c8c448b0809d0d74"
+  resolved "https://registry.npmjs.org/isows/-/isows-1.0.3.tgz"
   integrity sha512-2cKei4vlmg2cxEjm3wVSqn8pcoRF/LX/wpifuuNquFO4SQmPwarClT+SUCA2lt+l581tTeZIPIZuIDo2jWN1fg==
 
 json-schema-ref-resolver@^1.0.1:
@@ -550,7 +538,7 @@ mkdirp-classic@^0.5.2, mkdirp-classic@^0.5.3:
 
 mnemonist@0.39.6:
   version "0.39.6"
-  resolved "https://registry.yarnpkg.com/mnemonist/-/mnemonist-0.39.6.tgz#0b3c9b7381d9edf6ce1957e74b25a8ad25732f57"
+  resolved "https://registry.npmjs.org/mnemonist/-/mnemonist-0.39.6.tgz"
   integrity sha512-A/0v5Z59y63US00cRSLiloEIw3t5G+MiKz4BhX21FI+YBJXBOGW0ohFxTxO08dsOYlzxo87T7vGfZKYp2bcAWA==
   dependencies:
     obliterator "^2.0.1"
@@ -574,7 +562,7 @@ node-abi@^3.3.0:
 
 obliterator@^2.0.1:
   version "2.0.4"
-  resolved "https://registry.yarnpkg.com/obliterator/-/obliterator-2.0.4.tgz#fa650e019b2d075d745e44f1effeb13a2adbe816"
+  resolved "https://registry.npmjs.org/obliterator/-/obliterator-2.0.4.tgz"
   integrity sha512-lgHwxlxV1qIg1Eap7LgIeoBWIMFibOjbrYPIPJZcI1mmGAI2m3lNYpK12Y+GBdPQ0U1hRwSord7GIaawz962qQ==
 
 on-exit-leak-free@^2.1.0:
@@ -869,15 +857,10 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
-typescript@^4.7.4:
-  version "4.9.5"
-  resolved "https://registry.npmjs.org/typescript/-/typescript-4.9.5.tgz"
-  integrity sha512-1FXk9E2Hm+QzZQ7z+McJiHL4NW1F2EzMu9Nq9i3zAaGqibafqYwCVU6WyWAuyQRRzOlxou8xZSyXLEN8oKj24g==
-
-undici-types@~5.26.4:
-  version "5.26.5"
-  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-5.26.5.tgz#bcd539893d00b56e964fd2657a4866b221a65617"
-  integrity sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA==
+typescript@^5.3.3:
+  version "5.3.3"
+  resolved "https://registry.npmjs.org/typescript/-/typescript-5.3.3.tgz"
+  integrity sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==
 
 uri-js@^4.2.2:
   version "4.4.1"
@@ -898,7 +881,7 @@ v8-compile-cache-lib@^3.0.1:
 
 viem@^1.19.11:
   version "1.21.4"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-1.21.4.tgz#883760e9222540a5a7e0339809202b45fe6a842d"
+  resolved "https://registry.npmjs.org/viem/-/viem-1.21.4.tgz"
   integrity sha512-BNVYdSaUjeS2zKQgPs+49e5JKocfo60Ib2yiXOWBT6LuVxY1I/6fFX3waEtpXvL1Xn4qu+BVitVtMh9lyThyhQ==
   dependencies:
     "@adraffy/ens-normalize" "1.10.0"
@@ -917,7 +900,7 @@ wrappy@1:
 
 ws@8.13.0:
   version "8.13.0"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-8.13.0.tgz#9a9fb92f93cf41512a0735c8f4dd09b8a1211cd0"
+  resolved "https://registry.npmjs.org/ws/-/ws-8.13.0.tgz"
   integrity sha512-x9vcZYTrFPC7aSIbj7sRCYo7L/Xb8Iy+pW0ng0wt2vCJv7M9HOMy0UoN3rr+IFC7hb7vXoqS+P9ktyLLLhO+LA==
 
 ws@8.5.0:

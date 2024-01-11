@@ -80,20 +80,21 @@ export class SQLiteDatabase {
     return !row;
   }
 
-  addElement(name: string, address: string, chainId: 137) {
+  addElement(baseName: string, name: string, address: string, chainId: number) {
     const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
     const truncatedText = santisedName.slice(0, 42); // limit name to 255
 
-    // uses different ENS based on the ENV flag
-    let fullName = truncatedText + '.smartcat.eth'; // STAGING version.
-    if (process.env.NODE_ENV === "production") fullName = truncatedText + '.thesmartcats.eth';
+    let fullName = truncatedText + '.' + baseName;
 
-    const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
+    const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ? OR addresses LIKE ?').get(fullName, `%"${address}"%`);
+
+    if (existingRow)
+      throw new Error("Name already registered");
+
     const addresses = { 60: address };
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
-    if (!existingRow) {
-      const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
-      stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
-    }
+
+    const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
+    stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
   }
 }
