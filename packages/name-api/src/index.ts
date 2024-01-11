@@ -20,13 +20,13 @@ const db: SQLiteDatabase = new SQLiteDatabase(
 
 // PROD
 let provider = new ethers.JsonRpcProvider(`https://polygon-rpc.com/`);
+const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
-// TODO set up ENV for Prod and Staging.
+// TODO set up dotenv for Prod and Staging config
 
 // TEST
 // const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
-
-const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
+// const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
 console.log(`Path to Cert: ${PATH_TO_CERT}`);
 
