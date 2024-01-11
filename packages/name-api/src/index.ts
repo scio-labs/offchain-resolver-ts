@@ -4,6 +4,8 @@ import { ethers } from "ethers";
 import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
 import https from 'https';
+import dotenv from 'dotenv';
+dotenv.config();
 
 import { PRIVATE_KEY, SQLite_DB_FILE, PATH_TO_CERT } from "./constants";
 
@@ -16,7 +18,14 @@ const db: SQLiteDatabase = new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'
 );
 
-const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
+// PROD
+let provider = new ethers.JsonRpcProvider(`https://polygon-rpc.com/`);
+
+// TODO set up ENV for Prod and Staging.
+
+// TEST
+// const provider = new ethers.JsonRpcProvider('https://ethereum-goerli.publicnode.com');
+
 const testContractAddress = '0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229';
 
 console.log(`Path to Cert: ${PATH_TO_CERT}`);
@@ -75,22 +84,22 @@ app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
   } else {
     // do ecrecover
     try {
-    const applyerAddress = await recoverAddress(name, tokenId, signature);
-    console.log("APPLY: " + applyerAddress);
-    //now determine if user owns the NFT
-    const userOwns = await userOwnsNFT(applyerAddress, tokenId);
-    if (userOwns) {
-      console.log("TBA: " + tbaAccount);
-      const retVal: string = db.addElement(name, tbaAccount);
-      return "pass";
-    } else {
-      return "fail: User does not own NFT";
+      const applyerAddress = await recoverAddress(name, tokenId, signature);
+      console.log("APPLY: " + applyerAddress);
+      //now determine if user owns the NFT
+      const userOwns = await userOwnsNFT(applyerAddress, tokenId);
+      if (userOwns) {
+        console.log("TBA: " + tbaAccount);
+        const retVal: string = db.addElement(name, tbaAccount);
+        return "pass";
+      } else {
+        return "fail: User does not own NFT";
+      }
+      // const retVal: string = db.addElement(name, tbaAccount);
+      // return "pass";
+    } catch (error) {
+      return "Fail: invalid signature";
     }
-    // const retVal: string = db.addElement(name, tbaAccount);
-    // return "pass";
-  } catch (error) {
-    return "Fail: invalid signature";
-  }
   }
 });
 
@@ -115,9 +124,9 @@ async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
 
 function addHexPrefix(hex: string): string {
   if (hex.startsWith('0x')) {
-      return hex;
+    return hex;
   } else {
-      return '0x' + hex;
+    return '0x' + hex;
   }
 }
 
