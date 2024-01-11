@@ -30,7 +30,7 @@ export const CONTRACT_CONFIG = {
 	},
 	// Smartcat mumbai
 	"80001-0x614cf3021705977c2ef4beb9d7f10a6bf4eaebf6": {
-		baseName: "smartcats.eth"
+		baseName: "smartcat.eth"
 	},
 	// Goerli test
 	"5-0x2483e332d97c9daea4508c1c4f5bee4a90469229": {

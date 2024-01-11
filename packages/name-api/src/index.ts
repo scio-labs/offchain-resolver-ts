@@ -85,7 +85,7 @@ app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (r
 
     try {
       db.addElement(config.baseName, name, tbaAccount, parseInt(chainId));
-      return reply.status(200);
+      return reply.status(200).send("pass");
     } catch (e){
       return reply.status(400).send(e.message);
     }
