@@ -85,10 +85,7 @@ export class SQLiteDatabase {
     // const fullName = truncatedText + '.thesmartcats.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
 
-    // @ts-ignore
-    const totalEntries = this.db.prepare('SELECT COUNT(*) as count FROM names').get().count;
-
-    if (totalEntries > 1) {
+    if (existingRow) {
       // Decide what to do when the limit is reached, e.g., replace an existing entry or do nothing
       console.warn('Limit of 1 entrie(s) reached. Skipping addition of a new entry.');
       return;
