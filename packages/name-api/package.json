@@ -30,7 +30,7 @@
     "ethers": "^6.9.2",
     "fastify": "4.10.2",
     "json": "^11.0.0",
-    "typescript": "^4.7.4"
+    "typescript": "^5.3.3"
   },
   "devDependencies": {
     "@vercel/ncc": "^0.36.0",

@@ -1,13 +1,13 @@
 // @ts-nocheck
 import fastify from "fastify";
-import { ethers } from "ethers";
-import { SQLiteDatabase } from "./sqlite";
+import {ethers} from "ethers";
+import {SQLiteDatabase} from "./sqlite";
 import fs from 'fs';
-import https from 'https';
 
-import { PRIVATE_KEY, SQLite_DB_FILE, PATH_TO_CERT } from "./constants";
+import {CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE} from "./constants";
 
 import cors from '@fastify/cors';
+import {getTokenBoundAccount} from "./tokenBound";
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
@@ -58,50 +58,56 @@ app.get('/checkname/:name', async (request, reply) => {
 // input: tokenbound address
 app.get('/name/:address', async (request, reply) => {
   const address = request.params.address;
-  const nameFromAddress = db.getNameFromAddress(address);
-  return nameFromAddress
+  return db.getNameFromAddress(address)
 });
 
 app.get('/addr/:name', async (request, reply) => {
   const name = request.params.name;
-  const addressFromName = db.addr(name);
-  return addressFromName
+  return db.addr(name)
 });
 
-app.post('/:name/:tokenId/:tbaAccount/:signature', async (request, reply) => {
-  const { name, tokenId, tbaAccount, signature } = request.params;
-  if (!db.checkAvailable(name)) {
-    return "Fail: Name Unavailable";
-  } else {
-    // do ecrecover
+app.post('/:chainId/:tokenContract/:tokenId/:name/:tbaAccount/:signature', async (request, reply) => {
+
+  const { chainId, tokenContract, tokenId, name, signature } = request.params;
+
+  const config = CONTRACT_CONFIG[chainId + "-" + tokenContract];
+
+  if (!config)
+    return reply.status(400).send("Invalid chain and address combination");
+
+  if (!db.checkAvailable(name))
+    return reply.status(403).send("Name Unavailable");
+
+  const applyerAddress = recoverAddress(name, tokenId, signature);
+  console.log("APPLY: " + applyerAddress);
+
+  //now determine if user owns the NFT
+  const userOwns = userOwnsNFT(applyerAddress, tokenId);
+
+  if (userOwns) {
+
+    const tbaAccount = getTokenBoundAccount(chainId, tokenContract, tokenId);
+
+    console.log("TBA: " + tbaAccount);
+
     try {
-    const applyerAddress = await recoverAddress(name, tokenId, signature);
-    console.log("APPLY: " + applyerAddress);
-    //now determine if user owns the NFT
-    const userOwns = await userOwnsNFT(applyerAddress, tokenId);
-    if (userOwns) {
-      console.log("TBA: " + tbaAccount);
-      const retVal: string = db.addElement(name, tbaAccount);
-      return "pass";
-    } else {
-      return "fail: User does not own NFT";
+      db.addElement(config.baseName, name, tbaAccount, parseInt(chainId));
+      return reply.status(200);
+    } catch (e){
+      return reply.status(400).send(e.message);
     }
-    // const retVal: string = db.addElement(name, tbaAccount);
-    // return "pass";
-  } catch (error) {
-    return "Fail: invalid signature";
-  }
+  } else {
+    return reply.status(403).send("User does not own the NFT or signature is invalid");
   }
 });
 
-async function recoverAddress(catName: string, tokenId: string, signature: string): string {
+function recoverAddress(catName: string, tokenId: string, signature: string): string {
   const message = `Registering your catId ${tokenId} name to ${catName}`;
   console.log("MSG: " + message);
-  const signerAddress = ethers.verifyMessage(message, addHexPrefix(signature));
-  return signerAddress;
+  return ethers.verifyMessage(message, addHexPrefix(signature));
 }
 
-async function userOwnsNFT(applyerAddress: string, tokenId: string): boolean {
+async function userOwnsNFT(applyerAddress: string, tokenId: string): Promise<boolean> {
   const owner = await testCatsContract.ownerOf(tokenId);
   console.log("Owner: " + owner);
   if (owner === applyerAddress) {
