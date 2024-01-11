@@ -85,21 +85,27 @@ export class SQLiteDatabase {
     // const fullName = truncatedText + '.thesmartcats.eth';
     const existingRow = this.db.prepare('SELECT * FROM names WHERE name = ?').get(fullName);
 
-    if (existingRow) {
-      // Decide what to do when the limit is reached, e.g., replace an existing entry or do nothing
-      console.warn('Limit of 1 entrie(s) reached. Skipping addition of a new entry.');
-      return;
-    }
+    // if (existingRow) {
+    //   // Decide what to do when the limit is reached, e.g., replace an existing entry or do nothing
+    //   console.warn('Limit of 1 entrie(s) reached. Skipping addition of a new entry.');
+    //   return;
+    // }
+    // const addresses = { 60: address };
+    // // TODO - confirm the correct approach to manage off chain content not on IPFS or 
+    // const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
+    // if (!existingRow) {
+    //   const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
+    //   stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
+    // } else {
+    //   const stmt = this.db.prepare('UPDATE names SET addresses = ?, contenthash = ?, chain_id = ? WHERE name = ?');
+    //   stmt.run(JSON.stringify(addresses), contenthash, chainId, fullName);
+    // }
 
     const addresses = { 60: address };
-    // TODO - confirm the correct approach to manage off chain content not on IPFS or 
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
     if (!existingRow) {
       const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
       stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
-    } else {
-      const stmt = this.db.prepare('UPDATE names SET addresses = ?, contenthash = ?, chain_id = ? WHERE name = ?');
-      stmt.run(JSON.stringify(addresses), contenthash, chainId, fullName);
     }
   }
 }
