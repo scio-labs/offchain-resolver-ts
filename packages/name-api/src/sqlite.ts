@@ -82,7 +82,7 @@ export class SQLiteDatabase {
 
   addElement(baseName: string, name: string, address: string, chainId: number) {
     const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
-    const truncatedText = santisedName.slice(0, 255); // limit name to 255
+    const truncatedText = santisedName.slice(0, 42); // limit name to 255
 
     let fullName = truncatedText + '.' + baseName;
 

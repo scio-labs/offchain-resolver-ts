@@ -1,13 +1,13 @@
 // @ts-nocheck
 import fastify from "fastify";
-import {ethers} from "ethers";
-import {SQLiteDatabase} from "./sqlite";
+import { ethers } from "ethers";
+import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
 
-import {CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE} from "./constants";
+import { CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE } from "./constants";
 
 import cors from '@fastify/cors';
-import {getTokenBoundAccount} from "./tokenBound";
+import { getTokenBoundAccount } from "./tokenBound";
 
 const address: string = ethers.computeAddress(PRIVATE_KEY);
 const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
@@ -88,7 +88,7 @@ app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (r
     try {
       db.addElement(config.baseName, name, tbaAccount, chainInt);
       return reply.status(200).send("pass");
-    } catch (e){
+    } catch (e) {
       return reply.status(400).send(e.message);
     }
   } else {
@@ -128,9 +128,9 @@ async function userOwnsNFT(chainId: number, contractAddress: string, applyerAddr
 
 function addHexPrefix(hex: string): string {
   if (hex.startsWith('0x')) {
-      return hex;
+    return hex;
   } else {
-      return '0x' + hex;
+    return '0x' + hex;
   }
 }
 
