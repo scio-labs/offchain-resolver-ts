@@ -4,13 +4,10 @@ import { ethers } from "ethers";
 import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
 
-import { CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, PRIVATE_KEY, SQLite_DB_FILE } from "./constants";
+import { CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, SQLite_DB_FILE } from "./constants";
 
 import cors from '@fastify/cors';
 import { getTokenBoundAccount } from "./tokenBound";
-
-const address: string = ethers.computeAddress(PRIVATE_KEY);
-const signer: ethers.SigningKey = new ethers.SigningKey(PRIVATE_KEY);
 
 const db: SQLiteDatabase = new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'

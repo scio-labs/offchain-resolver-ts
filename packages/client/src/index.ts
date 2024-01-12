@@ -24,7 +24,8 @@ const provider = new ethers.providers.JsonRpcProvider(options.provider, {
 
 // Define the ENS resolver contract address for now, will add dynamic resolution if needed
 //const ensResolverAddress = '0x8464135c8F25Da09e49BC8782676a84730C318bC';
-const ensResolverAddress = '0x02957D5823c1C973f2075d870985c856b6D1b93E';
+//const ensResolverAddress = '0x02957D5823c1C973f2075d870985c856b6D1b93E';
+const ensResolverAddress = '0xeE6a307cdFe7Ee16988BF73Dfd0D001B3f200bD5'; //testnet
 
 //@ts-ignore
 const returnAbi = [
