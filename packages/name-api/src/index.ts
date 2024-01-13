@@ -51,9 +51,33 @@ app.get('/name/:address', async (request, reply) => {
   return db.getNameFromAddress(address)
 });
 
+app.get('/count/:val', async (request, reply) => {
+  var sz = 0;
+  try {
+    sz = db.getAccountCount();
+  } catch (error) {
+    console.log(error);
+    sz = error;
+  }
+
+  return sz;
+});
+
 app.get('/addr/:name', async (request, reply) => {
   const name = request.params.name;
   return db.addr(name)
+});
+
+app.get('/count', async (request, reply) => {
+  var sz = 0;
+  try {
+    sz = db.getAccountCount();
+  } catch (error) {
+    console.log(error);
+    sz = error;
+  }
+
+  return sz;
 });
 
 app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (request, reply) => {

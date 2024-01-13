@@ -22,6 +22,12 @@ export class SQLiteDatabase {
     `);
   }
 
+  getAccountCount(): string {
+    const count = this.db.prepare('SELECT COUNT(*) as count FROM names').get();
+    // @ts-ignore
+    return <string>count.count;
+  }
+
   addr(name: string, coinType = 60) {
     const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
 
