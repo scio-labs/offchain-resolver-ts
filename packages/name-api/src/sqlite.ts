@@ -44,11 +44,11 @@ export class SQLiteDatabase {
       useCoinType = 99998; // unused SLIP
     }
 
-    if (!addresses || !addresses[coinType]) {
+    if (!addresses || !addresses[useCoinType]) {
       return { addr: ZERO_ADDRESS };
     }
 
-    return { addr: addresses[coinType] };
+    return { addr: addresses[useCoinType] };
   }
 
   getNameFromAddress(address: string): string | null {
