@@ -74,7 +74,7 @@ const queryHandlers: {
   },
 };
 
-async function resolve(dataPath, name, ttlVal){
+async function resolve(dataPath: string, name: string, ttlVal: number){
 
   try {
     const addrReq = await fetch(`${dataPath}/addr/${name}`);
