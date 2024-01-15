@@ -5,6 +5,7 @@ import { hexConcat, Result } from 'ethers/lib/utils';
 import { abi as IResolverService_abi } from '@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/IResolverService.json';
 import { abi as Resolver_abi } from '@ensdomains/ens-contracts/artifacts/contracts/resolvers/Resolver.sol/Resolver.json';
 import fetch from 'node-fetch';
+import { ETH_COIN_TYPE } from './utils';
 const Resolver = new ethers.utils.Interface(Resolver_abi);
 
 interface DatabaseResult {
@@ -50,15 +51,14 @@ const queryHandlers: {
 } = {
   // @ts-ignore
   'addr(bytes32)': async (dataPath, name, ttlVal, _args) => { //Main ENS route should return no address
-    return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
+    return await resolve(dataPath, name, ETH_COIN_TYPE, ttlVal);
   },
   // @ts-ignore
   'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => { //addr(nodeHash,coinType) should return address if looking on Polygon mainnet (SLIP-44: #966).
 
-    if (args[0] != 966)
-      return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
+    const coinType = <number>args[0];
 
-    return await resolve(dataPath, name, ttlVal);
+    return await resolve(dataPath, name, coinType, ttlVal);
   },
   // @ts-ignore
   'text(bytes32,string)': async (dataPath, name, ttlVal, args) => {
@@ -74,10 +74,10 @@ const queryHandlers: {
   },
 };
 
-async function resolve(dataPath: string, name: string, ttlVal: number){
+async function resolve(dataPath: string, name: string, coinType: number, ttlVal: number){
 
   try {
-    const addrReq = await fetch(`${dataPath}/addr/${name}`);
+    const addrReq = await fetch(`${dataPath}/addr/${name}/${coinType}`);
     const resp = await addrReq.json();
     return { result: [resp.addr], ttl:ttlVal };
   } catch (error) {

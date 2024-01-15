@@ -63,9 +63,10 @@ app.get('/count/:val', async (request, reply) => {
   return sz;
 });
 
-app.get('/addr/:name', async (request, reply) => {
+app.get('/addr/:name/:coinType', async (request, reply) => {
   const name = request.params.name;
-  return db.addr(name)
+  const coinType = request.params.coinType;
+  return db.addr(name, coinType)
 });
 
 app.get('/count', async (request, reply) => {
