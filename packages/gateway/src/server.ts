@@ -50,7 +50,7 @@ const queryHandlers: {
 } = {
   // @ts-ignore
   'addr(bytes32)': async (dataPath, name, ttlVal, _args) => {
-    return resolve(dataPath, name, ttlVal);
+    return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
   },
   // @ts-ignore
   'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => {
