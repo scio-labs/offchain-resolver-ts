@@ -58,7 +58,7 @@ const queryHandlers: {
     if (args[1] != 966)
       return { result: [null], ttl:ttlVal };
 
-    return resolve(dataPath, name, ttlVal);
+    return await resolve(dataPath, name, ttlVal);
   },
   // @ts-ignore
   'text(bytes32,string)': async (dataPath, name, ttlVal, args) => {
