@@ -49,14 +49,14 @@ const queryHandlers: {
   ) => Promise<DatabaseResult>;
 } = {
   // @ts-ignore
-  'addr(bytes32)': async (dataPath, name, ttlVal, _args) => {
+  'addr(bytes32)': async (dataPath, name, ttlVal, _args) => { //Main ENS route should return no address
     return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
   },
   // @ts-ignore
-  'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => {
+  'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => { //addr(nodeHash,coinType) should return address if looking on Polygon mainnet (SLIP-44: #966).
 
-    if (args[1] != 966)
-      return { result: [null], ttl:ttlVal };
+    if (args[0] != 966)
+      return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
 
     return await resolve(dataPath, name, ttlVal);
   },
@@ -82,7 +82,7 @@ async function resolve(dataPath: string, name: string, ttlVal: number){
     return { result: [resp.addr], ttl:ttlVal };
   } catch (error) {
     console.log('error', error);
-    return { result: [null], ttl:ttlVal };
+    return { result: ["0x0000000000000000000000000000000000000000"], ttl:ttlVal };
   }
 }
 
