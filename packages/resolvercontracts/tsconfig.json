@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+      "target": "es2018",
+      "module": "commonjs",
+      "strict": false,
+      "esModuleInterop": true,
+      "experimentalDecorators": true,
+      "outDir": "dist"
+  },
+  "include": ["./scripts", "./test", "scripts"],
+  "files": ["./hardhat.config.ts"]
+}
