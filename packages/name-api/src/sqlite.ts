@@ -36,12 +36,12 @@ export class SQLiteDatabase {
     var useCoinType = coinType;
 
     // Grim hack: for our first experiments only coinType 60 worked due to only 0, 2, 3, 60, 61, 700 being supported by @ethersproject base-provider
-    // In this experiment, we only return addresses intended for Polygon/ SLIP 966, since all the addresses are stored as 60,
-    // convert input 966 to 60, and input 60 to an unused SLIP
-    if (coinType == 966) {
+    // In this experiment, we only return addresses intended for Polygon/ ENSIP-11, since all the addresses are stored as 60,
+    // convert input ENSIP-11(MATIC) to 60, and input 60 to an unused value
+    if (coinType == 0x80000089) {
       useCoinType = 60;
     } else if (coinType == 60) {
-      useCoinType = 99998; // unused SLIP
+      useCoinType = -1; 
     }
 
     if (!addresses || !addresses[useCoinType]) {
