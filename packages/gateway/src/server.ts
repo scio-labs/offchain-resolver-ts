@@ -50,25 +50,15 @@ const queryHandlers: {
 } = {
   // @ts-ignore
   'addr(bytes32)': async (dataPath, name, ttlVal, _args) => {
-    console.log(".A")
-    // const { addr, ttl } = await db.addr(name, ETH_COIN_TYPE);
-    // return { result: [addr], ttl };
-    try {
-      const addrReq = await fetch(`${dataPath}/addr/${name}`);
-      const resp = await addrReq.json();
-      // @ts-ignore
-      console.log('addr', resp.addr);
-      // @ts-ignore
-      return { result: [resp.addr], ttl:ttlVal };
-    } catch (error) {
-      console.log('error', error);
-    }
+    return resolve(dataPath, name, ttlVal);
   },
   // @ts-ignore
   'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => {
-    //const { addr, ttl } = await db.addr(name, args[0]);
-    const addr = null;
-    return { result: [addr], ttl:ttlVal };
+
+    if (args[1] != 966)
+      return { result: [null], ttl:ttlVal };
+
+    return resolve(dataPath, name, ttlVal);
   },
   // @ts-ignore
   'text(bytes32,string)': async (dataPath, name, ttlVal, args) => {
@@ -83,6 +73,18 @@ const queryHandlers: {
     return { result: [contenthash], ttl:ttlVal };
   },
 };
+
+async function resolve(dataPath, name, ttlVal){
+
+  try {
+    const addrReq = await fetch(`${dataPath}/addr/${name}`);
+    const resp = await addrReq.json();
+    return { result: [resp.addr], ttl:ttlVal };
+  } catch (error) {
+    console.log('error', error);
+    return { result: [null], ttl:ttlVal };
+  }
+}
 
 async function query(
   dataPath: string,
