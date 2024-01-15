@@ -28,17 +28,27 @@ export class SQLiteDatabase {
     return <string>count.count;
   }
 
-  addr(name: string, coinType = 60) {
+  addr(name: string, coinType: number) {
     const row = this.db.prepare('SELECT addresses FROM names WHERE name = ?').get(name.toLowerCase());
 
     // @ts-ignore
     const addresses = row ? JSON.parse(row.addresses) : null;
+    var useCoinType = coinType;
 
-    if (!addresses || !addresses[coinType]) {
+    // Grim hack: for our first experiments only coinType 60 worked due to only 0, 2, 3, 60, 61, 700 being supported by @ethersproject base-provider
+    // In this experiment, we only return addresses intended for Polygon/ ENSIP-11, since all the addresses are stored as 60,
+    // convert input ENSIP-11(MATIC) to 60, and input 60 to an unused value
+    if (coinType == 0x80000089) {
+      useCoinType = 60;
+    } else if (coinType == 60) {
+      useCoinType = -1; 
+    }
+
+    if (!addresses || !addresses[useCoinType]) {
       return { addr: ZERO_ADDRESS };
     }
 
-    return { addr: addresses[coinType] };
+    return { addr: addresses[useCoinType] };
   }
 
   getNameFromAddress(address: string): string | null {
