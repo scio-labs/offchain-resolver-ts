@@ -57,6 +57,7 @@ const queryHandlers: {
   'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => { //addr(nodeHash,coinType) should return address if looking on Polygon mainnet (SLIP-44: #966).
 
     const coinType = <number>args[0];
+    console.log(`${name} Attempt to resolve: ${coinType}`);
 
     return await resolve(dataPath, name, coinType, ttlVal);
   },
