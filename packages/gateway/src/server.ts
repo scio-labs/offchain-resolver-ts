@@ -50,11 +50,11 @@ const queryHandlers: {
   ) => Promise<DatabaseResult>;
 } = {
   // @ts-ignore
-  'addr(bytes32)': async (dataPath, name, ttlVal, _args) => { //Main ENS route should return no address
+  'addr(bytes32)': async (dataPath, name, ttlVal, _args) => { 
     return await resolve(dataPath, name, ETH_COIN_TYPE, ttlVal);
   },
   // @ts-ignore
-  'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => { //addr(nodeHash,coinType) should return address if looking on Polygon mainnet (SLIP-44: #966).
+  'addr(bytes32,uint256)': async (dataPath, name, ttlVal, args) => { 
 
     const coinType = <number>args[0];
     console.log(`${name} Attempt to resolve: ${coinType}`);
