@@ -79,7 +79,6 @@ async function getTokenImage(name: string, tokenId: number) {
 
   if (tokenContract) {
     const tokenData = await tokenDataRequest(chainId, tokenContract, tokenId);
-    console.log("TokenImage: " + tokenData);
     return tokenData;
   } else {
     return "";
