@@ -3,11 +3,31 @@ import fastify from "fastify";
 import { ethers } from "ethers";
 import { SQLiteDatabase } from "./sqlite";
 import fs from 'fs';
+import { tokenDataRequest } from "./tokenDiscovery";
+import fetch, {
+  Blob,
+  blobFrom,
+  blobFromSync,
+  File,
+  fileFrom,
+  fileFromSync,
+  FormData,
+  Headers,
+  Request,
+  Response,
+} from 'node-fetch'
+
+if (!globalThis.fetch) {
+  globalThis.fetch = fetch
+  globalThis.Headers = Headers
+  globalThis.Request = Request
+  globalThis.Response = Response
+}
 
 import { CHAIN_CONFIG, CONTRACT_CONFIG, PATH_TO_CERT, SQLite_DB_FILE } from "./constants";
 
 import cors from '@fastify/cors';
-import { getTokenBoundAccount } from "./tokenBound";
+import { getTokenBoundAccount, getTokenBoundNFT } from "./tokenBound";
 
 const db: SQLiteDatabase = new SQLiteDatabase(
   SQLite_DB_FILE, // e.g. 'ensnames.db'
@@ -36,6 +56,54 @@ await app.register(cors, {
   origin: true
 })
 
+async function getTokenImage(name: string, tokenId: number) {
+  //TODO: lookup token contract and chainId from database, given the name.
+  //      You would store the avatar URL at creation time
+  //get domain
+  
+  var tokenContract;
+  var chainId;
+  const baseName = getBaseName(name);
+  console.log("Base name: " + baseName);
+
+  switch (baseName) {
+    case 'smartcat.eth':
+      tokenContract = "0x2483e332d97c9daea4508c1c4f5bee4a90469229";
+      chainId = 5;
+      break;
+    case 'thesmartcats.eth':
+      tokenContract = "0xd5ca946ac1c1f24eb26dae9e1a53ba6a02bd97fe";
+      chainId = 137;
+      break;
+  }
+
+  if (tokenContract) {
+    const tokenData = await tokenDataRequest(chainId, tokenContract, tokenId);
+    console.log("TokenImage: " + tokenData);
+    return tokenData;
+  } else {
+    return "";
+  }
+}
+
+app.get('/text/:name/:key', async (request, reply) => {
+  const recordName = request.params.name;
+  const recordKey = request.params.key; // e.g. Avatar
+  if (!recordKey || !recordName) return "";
+  switch (recordKey.toLowerCase()) {
+    case 'avatar':
+      const tokenId: number = db.getTokenIdFromName(recordName);
+      if (tokenId == -1) {
+        return "";
+      } else {
+        return getTokenImage(recordName, tokenId);
+      }
+
+    default:
+      return "";
+  }
+});
+
 app.get('/checkname/:name', async (request, reply) => {
   const name = request.params.name;
   if (!db.checkAvailable(name)) {
@@ -43,6 +111,17 @@ app.get('/checkname/:name', async (request, reply) => {
   } else {
     return "available";
   }
+});
+
+app.get('/tokenId/:name', async (request, reply) => {
+  const name = request.params.name;
+  return db.getTokenIdFromName(name);
+});
+
+app.get('/image/:name', async (request, reply) => {
+  const name = request.params.name;
+  const tokenId = db.getTokenIdFromName(name);
+  return getTokenImage(name, tokenId);
 });
 
 // input: tokenbound address
@@ -108,7 +187,7 @@ app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (r
     console.log("TBA: " + tbaAccount);
 
     try {
-      db.addElement(config.baseName, name, tbaAccount, chainInt);
+      db.addElement(config.baseName, name, tbaAccount, chainInt, tokenId);
       return reply.status(200).send("pass");
     } catch (e) {
       return reply.status(400).send(e.message);
@@ -177,11 +256,35 @@ function addHexPrefix(hex: string): string {
   console.log(`Recovered address: ${signerAddress}`);
 }*/
 
+function getBaseName(name: string): string {
+  let parts = name.split('.');
+  return parts.slice(1).join('.');
+}
+
+function getTBAName() {
+  var tbaAccount = getTokenBoundAccount(5, "0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(137, "0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(80001, "0x2483e332d97C9DaeA4508c1C4F5BEE4a90469229", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(5, "0xd5ca946ac1c1f24eb26dae9e1a53ba6a02bd97fe", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(137, "0xd5ca946ac1c1f24eb26dae9e1a53ba6a02bd97fe", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(80001, "0xd5ca946ac1c1f24eb26dae9e1a53ba6a02bd97fe", 1);
+  console.log("TBA: " + tbaAccount);
+  tbaAccount = getTokenBoundAccount(5, "0xd5ca946ac1c1f24eb26dae9e1a53ba6a02bd97fe", 1);
+  console.log("TBA: " + tbaAccount);
+}
+
 const start = async () => {
 
   try {
     await app.listen({ port: 8083, host: '0.0.0.0' });
     console.log(`Server is listening on ${app.server?.address().port}`);
+    db.initDb();
+    getTBAName();
   } catch (err) {
     console.log(err);
     app.log.error(err);

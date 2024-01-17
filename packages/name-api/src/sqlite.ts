@@ -1,5 +1,7 @@
 import BetterSqlite3 from 'better-sqlite3';
 import dotenv from 'dotenv';
+import csv from 'csv-parser';
+import { Readable } from 'stream';
 dotenv.config();
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -18,8 +20,22 @@ export class SQLiteDatabase {
         text TEXT,
         contenthash TEXT,
         chain_id INTEGER,
+        token_id INTEGER,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
     `);
+  }
+
+  initDb() {
+    const columnInfo = this.db.prepare("PRAGMA table_info(names)").all();
+    // @ts-ignore
+    const columnExists = columnInfo.some(column => column.name === 'token_id');
+
+    if (!columnExists) {
+      console.log("Updating to add tokenId");
+      this.db.exec(`
+      ALTER TABLE names
+      ADD COLUMN token_id INTEGER;`);
+    }
   }
 
   getAccountCount(): string {
@@ -42,13 +58,40 @@ export class SQLiteDatabase {
       useCoinType = 60;
     } else if (coinType == 60) {
       useCoinType = -1; 
-    }
+    } 
 
     if (!addresses || !addresses[useCoinType]) {
       return { addr: ZERO_ADDRESS };
     }
 
     return { addr: addresses[useCoinType] };
+  }
+
+  // @ts-ignore
+  setTokenId(domainName: string, chainId: number, tokensCSV: string) {
+
+    Readable.from(tokensCSV)
+      .pipe(csv())
+      .on('data', (row: string) => {
+        //handle each data element:
+        //1. calculate TBA using domain name and chainId
+        //2. find corresponding entry in DB
+        //3. update DB element if found
+        console.log(row);
+      })
+      .on('end', () => {
+        return "complete";
+      });
+  }
+
+  getTokenIdFromName(name: string): number {
+    const row = this.db.prepare('SELECT token_id FROM names WHERE name = ?').get(name.toLowerCase());
+    if (row) {
+      // @ts-ignore
+      return row.token_id;
+    } else {
+      return -1;
+    }
   }
 
   getNameFromAddress(address: string): string | null {
@@ -96,7 +139,7 @@ export class SQLiteDatabase {
     return !row;
   }
 
-  addElement(baseName: string, name: string, address: string, chainId: number) {
+  addElement(baseName: string, name: string, address: string, chainId: number, tokenId: number) {
     const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
     const truncatedText = santisedName.slice(0, 42); // limit name to 255
 
@@ -110,7 +153,7 @@ export class SQLiteDatabase {
     const addresses = { 60: address };
     const contenthash = '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe';
 
-    const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id) VALUES (?, ?, ?, ?)');
-    stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId);
+    const stmt = this.db.prepare('INSERT INTO names (name, addresses, contenthash, chain_id, token_id) VALUES (?, ?, ?, ?, ?)');
+    stmt.run(fullName, JSON.stringify(addresses), contenthash, chainId, tokenId);
   }
 }
