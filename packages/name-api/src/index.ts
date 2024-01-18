@@ -47,6 +47,7 @@ interface QueryResult {
 let cachedResults = new Map<string, QueryResult>();
 
 const cacheTimeout = 30 * 1000; // 30 second cache validity
+const logDumpLimit = 2000; //allow 2000 logs to be dumped
 
 if (PATH_TO_CERT) {
   app = fastify({
@@ -182,15 +183,15 @@ app.get('/count', async (request, reply) => {
 app.get('/lastError', async (request, reply) => {
   var errors = ".";
   try {
-    let errorPage = lastError.length < 100 ? lastError.length : 100; 
+    let errorPage = lastError.length < logDumpLimit ? lastError.length : logDumpLimit; 
     for (let i = 0; i < errorPage; i++) {
       errors += lastError[i];
       errors += ',';
     }
 
     // Consume errors
-    if (errorPage == 100) {
-      lastError.splice(0, 100);
+    if (errorPage == logDumpLimit) {
+      lastError.splice(0, logDumpLimit);
     } else {
       lastError = [];
     }
@@ -206,15 +207,15 @@ app.get('/lastError', async (request, reply) => {
 app.get('/coinTypes', async (request, reply) => {
   var coinTypeRequests = ".";
   try {
-    let coinPage = coinTypeRoute.length < 100 ? coinTypeRoute.length : 100; 
+    let coinPage = coinTypeRoute.length < logDumpLimit ? coinTypeRoute.length : logDumpLimit; 
     for (let i = 0; i < coinPage; i++) {
       coinTypeRequests += coinTypeRoute[i];
       coinTypeRequests += ',';
     }
 
     // Consume errors
-    if (coinPage == 100) {
-      coinTypeRoute.splice(0, 100);
+    if (coinPage == logDumpLimit) {
+      coinTypeRoute.splice(0, logDumpLimit);
     } else {
       coinTypeRoute = [];
     }
