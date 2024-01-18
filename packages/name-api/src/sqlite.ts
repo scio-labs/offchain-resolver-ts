@@ -1,7 +1,5 @@
 import BetterSqlite3 from 'better-sqlite3';
 import dotenv from 'dotenv';
-import csv from 'csv-parser';
-import { Readable } from 'stream';
 dotenv.config();
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
@@ -52,9 +50,9 @@ export class SQLiteDatabase {
     var useCoinType = coinType;
 
     // Grim hack: for our first experiments only coinType 60 worked due to only 0, 2, 3, 60, 61, 700 being supported by @ethersproject base-provider
-    // In this experiment, we only return addresses intended for Polygon/ ENSIP-11, since all the addresses are stored as 60,
+    // In this experiment, we only return addresses intended for Polygon/ENSIP-11 & SLIP-44, since all the addresses are stored as 60,
     // convert input ENSIP-11(MATIC) to 60, and input 60 to an unused value
-    if (coinType == 0x80000089) {
+    if (coinType == 0x80000089 || coinType == 966) {
       useCoinType = 60;
     } else if (coinType == 60) {
       useCoinType = -1; 
@@ -67,21 +65,17 @@ export class SQLiteDatabase {
     return { addr: addresses[useCoinType] };
   }
 
-  // @ts-ignore
-  setTokenId(domainName: string, chainId: number, tokensCSV: string) {
-
-    Readable.from(tokensCSV)
-      .pipe(csv())
-      .on('data', (row: string) => {
-        //handle each data element:
-        //1. calculate TBA using domain name and chainId
-        //2. find corresponding entry in DB
-        //3. update DB element if found
-        console.log(row);
-      })
-      .on('end', () => {
-        return "complete";
-      });
+  updateTokenId(name: string, tokenId: number) {
+    const row = this.db.prepare('SELECT token_id FROM names WHERE name = ?').get(name.toLowerCase());
+    
+    // @ts-ignore
+    if (!row || !row.token_id) {
+      try {
+        this.db.prepare('UPDATE names SET token_id = ? WHERE name = ?').run(tokenId, name.toLowerCase());
+      } catch (error) {
+        console.log(error);
+      }
+    }
   }
 
   getTokenIdFromName(name: string): number {
@@ -139,6 +133,7 @@ export class SQLiteDatabase {
     return !row;
   }
 
+  // @ts-ignore
   addElement(baseName: string, name: string, address: string, chainId: number, tokenId: number) {
     const santisedName = name.toLowerCase().replace(/\s+/g, '-').replace(/-{2,}/g, '').replace(/^-+/g, '').replace(/[;'"`\\]/g, '').replace(/^-+|-+$/g, '');
     const truncatedText = santisedName.slice(0, 42); // limit name to 255
