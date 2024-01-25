@@ -103,8 +103,8 @@ function getTokenLocation(name: string): { number, string } {
 app.get('/text/:name/:key', async (request, reply) => {
   const recordName = request.params.name;
   const recordKey = request.params.key; // e.g. Avatar
-  coinTypeRoute.push(`${recordName} Text Request: ${recordKey}`);
   if (!recordKey || !recordName) return "";
+  addCointTypeCheck(`${recordName} Text Request: ${recordKey}`);
   switch (recordKey.toLowerCase()) {
     case 'avatar':
       const tokenId: number = db.getTokenIdFromName(recordName);
@@ -139,6 +139,13 @@ app.get('/image/:name', async (request, reply) => {
   return getTokenImage(name, tokenId);
 });
 
+app.get('/droptables/:page', async (request, reply) => {
+  const page = request.params.page;
+  const list = db.getTokenIdVsName(page, logDumpLimit);
+
+  return list;
+});
+
 // input: tokenbound address
 app.get('/name/:address/:tokenid?', async (request, reply) => {
   const address = request.params.address;
@@ -157,14 +164,13 @@ app.get('/name/:address/:tokenid?', async (request, reply) => {
     }
   }
 
-
   return fetchedName;
 });
 
 app.get('/addr/:name/:coinType', async (request, reply) => {
   const name = request.params.name;
   const coinType = request.params.coinType;
-  coinTypeRoute.push(`${name} Attempt to resolve: ${coinType}`);
+  addCointTypeCheck(`${name} Attempt to resolve: ${coinType}`);
   return db.addr(name, coinType)
 });
 
@@ -213,7 +219,7 @@ app.get('/coinTypes', async (request, reply) => {
       coinTypeRequests += ',';
     }
 
-    // Consume errors
+    // Consume
     if (coinPage == logDumpLimit) {
       coinTypeRoute.splice(0, logDumpLimit);
     } else {
@@ -227,6 +233,15 @@ app.get('/coinTypes', async (request, reply) => {
 
   return coinTypeRequests;
 });
+
+// restrict size
+function addCointTypeCheck(text: string) {
+  coinTypeRoute.push(`${recordName} Text Request: ${recordKey}`);
+
+  if (coinTypeRoute.length > (logDumpLimit * 2)) {
+    coinTypeRoute.splice(0, logDumpLimit * 2);
+  }
+}
 
 app.post('/register/:chainId/:tokenContract/:tokenId/:name/:signature', async (request, reply) => {
 

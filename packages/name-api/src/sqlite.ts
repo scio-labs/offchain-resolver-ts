@@ -88,6 +88,26 @@ export class SQLiteDatabase {
     }
   }
 
+  getTokenIdVsName(page: number, pageSize: number): string | null {
+    const offset = page * pageSize;
+    const rows = this.db.prepare('SELECT name, token_id FROM names ORDER BY name LIMIT ? OFFSET ?').all(pageSize, offset);
+    var result = "";
+    if (rows) {
+      // @ts-ignore
+      //convert into CSV
+      for (const row of rows) {
+        // @ts-ignore
+        result += `${row.name}, ${row.token_id},`;
+      }
+    }
+
+    if (result.length == 0) {
+      result = "No further entries";
+    }
+
+    return result;
+  }
+
   getNameFromAddress(address: string): string | null {
     const row = this.db.prepare('SELECT name FROM names WHERE addresses LIKE ? ORDER BY createdAt DESC LIMIT 1').get(`%"${address}"%`);
     if (row) {
