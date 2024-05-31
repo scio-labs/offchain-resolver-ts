@@ -502,10 +502,10 @@ export class SQLiteDatabase {
     // Check NFT indexes
     let tokenRow = this.db.prepare('SELECT id FROM nft_names WHERE token = ? AND chain_id = ? AND resolver_chain = ?').get(address, chainId, ensChainId);
 
-    consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
+    //consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
 
     if (tokenRow) {
-      consoleLog(`getNameFromToken3 ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
+      //consoleLog(`getNameFromToken3 ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
       // @ts-ignore
       let row = this.db.prepare('SELECT name FROM names WHERE token_id = ? AND nft_names_index = ?').get(tokenId, tokenRow.id);
       if (row) {
@@ -515,13 +515,12 @@ export class SQLiteDatabase {
     }
 
     tokenRow = this.db.prepare('SELECT * FROM tokens WHERE token = ? AND chain_id = ? AND resolver_chain = ?').get(address, chainId, ensChainId);
-    consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
+    //consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
 
     if (tokenRow) {
-      consoleLog(`getNameFromToken2 ${chainId} ${address} ${tokenId} ${JSON.stringify(tokenRow)}`);
       // @ts-ignore
       let row = this.db.prepare('SELECT name FROM names WHERE tokens_index = ? AND token_id = ?').get(tokenRow.id, tokenId);
-      consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(row)} ${JSON.stringify(tokenRow)}`);
+      //consoleLog(`getNameFromToken ${chainId} ${address} ${tokenId} ${JSON.stringify(row)} ${JSON.stringify(tokenRow)}`);
       if (row) {
         // @ts-ignore
         return row.name;
