@@ -6,7 +6,7 @@ You can run the gateway as a command line tool; in its default configuration it 
 
 ```
 yarn && yarn build
-yarn start --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 --data test.eth.json
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 DATA=test.eth.json PUBLIC_KEY=test_public_key yarn start
 ```
 
 `private-key` should be an Ethereum private key that will be used to sign messages. You should configure your resolver contract to expect messages to be signed using the corresponding address.
