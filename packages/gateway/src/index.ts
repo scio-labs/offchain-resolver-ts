@@ -5,12 +5,11 @@ import { JSONDatabase } from './json';
 
 const ttl = process.env.TTL ?? '300'
 const port = process.env.PORT ?? '8080'
-const publicKey = process.env.PUBLIC_KEY
 const data = process.env.DATA
 
 let privateKey: any = process.env.PRIVATE_KEY
 
-if (!privateKey || !publicKey || !data) {
+if (!privateKey || !data) {
   throw Error('One or more of the environment variables were not set');
 }
 
