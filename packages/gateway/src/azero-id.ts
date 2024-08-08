@@ -41,13 +41,44 @@ export class AzeroId implements Database {
     return { addr: ZERO_ADDRESS, ttl: this.ttl };
   }
 
-  text(name: string, key: string) {
+  async text(name: string, key: string) {
     console.log("text", name, key);
-    return { value: '', ttl: this.ttl };
+    const value = await this.fetchRecord(name, key) || '';
+    return { value, ttl: this.ttl };
   }
 
   contenthash(name: string) {
     console.log("contenthash", name);
     return { contenthash: EMPTY_CONTENT_HASH, ttl: this.ttl };
+  }
+
+  private async fetchRecord(name: string, key: string) {
+    name = this.processName(name);
+    const resp: any = await this.contract.query.getRecord(
+      '',
+      {
+        gasLimit: this.maxGasLimit
+      },
+      name,
+      key
+    );
+    
+    return resp.output?.toHuman().Ok.Ok;
+  }
+
+  private processName(domain: string) {
+    // TODO: maybe add it as a class variable
+    const supportedTLDs = ['azero', 'tzero'];
+    const labels = domain.split('.');
+    console.log("Labels:", labels);
+
+    const name = labels.shift();
+    if(labels.length != 0) {
+      const tld = labels.join('.');
+      if (!supportedTLDs.includes(tld)) 
+        throw new Error(`TLD (.${tld}) not supported`);
+    }
+
+    return name || '';
   }
 }
