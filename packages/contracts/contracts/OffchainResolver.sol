@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "@ensdomains/ens-contracts/contracts/resolvers/SupportsInterface.sol";
 import "./IExtendedResolver.sol";
 import "./SignatureVerifier.sol";
@@ -13,11 +14,12 @@ interface IResolverService {
  * Implements an ENS resolver that directs all queries to a CCIP read gateway.
  * Callers must implement EIP 3668 and ENSIP 10.
  */
-contract OffchainResolver is IExtendedResolver, SupportsInterface {
+contract OffchainResolver is Ownable, IExtendedResolver, SupportsInterface {
     string public url;
     mapping(address=>bool) public signers;
 
     event NewSigners(address[] signers);
+    event SignersRemoved(address[] signers);
     error OffchainLookup(address sender, string[] urls, bytes callData, bytes4 callbackFunction, bytes extraData);
 
     constructor(string memory _url, address[] memory _signers) {
@@ -26,6 +28,24 @@ contract OffchainResolver is IExtendedResolver, SupportsInterface {
             signers[_signers[i]] = true;
         }
         emit NewSigners(_signers);
+    }
+
+    function setUrl(string calldata _url) external onlyOwner {
+        url = _url;
+    }
+
+    function addSigners(address[] calldata _signers) external onlyOwner {
+        for(uint i = 0; i < _signers.length; i++) {
+            signers[_signers[i]] = true;
+        }
+        emit NewSigners(_signers);
+    }
+
+    function removeSigners(address[] calldata _signers) external onlyOwner {
+        for(uint i = 0; i < _signers.length; i++) {
+            signers[_signers[i]] = false;
+        }
+        emit SignersRemoved(_signers);
     }
 
     function makeSignatureHash(address target, uint64 expires, bytes memory request, bytes memory result) external pure returns(bytes32) {
