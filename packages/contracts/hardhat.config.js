@@ -42,6 +42,13 @@ module.exports = {
       accounts: real_accounts,
       gatewayurl,
     },
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`,
+      tags: ['test', 'demo'],
+      chainId: 11155111,
+      accounts: real_accounts,
+      gatewayurl,
+    },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_ID}`,
       tags: ['demo'],
