@@ -4,6 +4,7 @@ require('@nomiclabs/hardhat-ethers');
 require('@nomiclabs/hardhat-waffle');
 require('hardhat-deploy');
 require('hardhat-deploy-ethers');
+require('dotenv').config();
 
 real_accounts = undefined;
 if (process.env.DEPLOYER_KEY) {
