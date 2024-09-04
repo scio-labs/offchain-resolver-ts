@@ -16,3 +16,30 @@ This library facilitates checking signatures over CCIP read responses.
 
 ### [OffchainResolver.sol](contracts/OffchainResolver.sol)
 This contract implements the offchain resolution system. Set this contract as the resolver for a name, and that name and all its subdomains that are not present in the ENS registry will be resolved via the provided gateway by supported clients.
+
+## Deployment instruction
+
+1. Set the following env variables:
+
+    * *REMOTE_GATEWAY*  
+    The target url (default: localhost:8080)
+
+    * *DEPLOYER_KEY* (*mandatory)  
+    The private key use to deploy the contract (also the contract owner)
+
+    * *SIGNER_KEY* (*mandatory)  
+    The public key which is approved as the trusted signer
+
+    * *INFURA_ID*  
+    API key for network provider
+
+    * *ETHERSCAN_API_KEY*
+
+    * *NETWORK*  
+    The target network (default: sepolia)
+
+2. Run the following command
+
+```bash
+./deploy.sh
+```
