@@ -6,17 +6,10 @@ require('hardhat-deploy');
 require('hardhat-deploy-ethers');
 
 real_accounts = undefined;
-if (process.env.DEPLOYER_KEY && process.env.OWNER_KEY) {
-  real_accounts = [process.env.OWNER_KEY, process.env.DEPLOYER_KEY];
+if (process.env.DEPLOYER_KEY) {
+  real_accounts = [process.env.DEPLOYER_KEY];
 }
-const gatewayurl =
-  'https://offchain-resolver-example.uc.r.appspot.com/{sender}/{data}.json';
-
-let devgatewayurl = 'http://localhost:8080/{sender}/{data}.json';
-if (process.env.REMOTE_GATEWAY) {
-  devgatewayurl =
-    `${process.env.REMOTE_GATEWAY}/{sender}/{data}.json`;
-}
+const gatewayurl = process.env.REMOTE_GATEWAY || 'http://localhost:8080/';
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -26,7 +19,7 @@ module.exports = {
   networks: {
     hardhat: {
       throwOnCallFailures: false,
-      gatewayurl: devgatewayurl,
+      gatewayurl,
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_ID}`,
@@ -61,11 +54,11 @@ module.exports = {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
   namedAccounts: {
-    signer: {
-      default: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
-    },
     deployer: {
-      default: 1,
+      default: 0,
+    },
+    signer: {
+      default: process.env.SIGNER_ADDR,
     },
   },
 };
