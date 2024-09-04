@@ -36,9 +36,27 @@ export class AzeroId implements Database {
     );
   }
 
-  addr(name: string, coinType: number) {
+  async addr(name: string, coinType: number) {
     console.log("addr", name, coinType);
-    return { addr: ZERO_ADDRESS, ttl: this.ttl };
+    
+    let value;
+    if (coinType == 643) {
+      // AlephZero
+      value = await this.fetchA0ResolverAddress(name);
+    } else {
+      let alias = AzeroId.getAlias(""+coinType);
+      if (alias !== undefined) {
+        const serviceKey = "address." + alias;
+        value = await this.fetchRecord(name, serviceKey);
+      }
+      if (value === undefined) {
+        const serviceKey = "address." + coinType;
+        value = await this.fetchRecord(name, serviceKey);
+      }
+    }
+
+    value = value ?? (coinType == 60? ZERO_ADDRESS:'0x');
+    return { addr: value, ttl: this.ttl };
   }
 
   async text(name: string, key: string) {
@@ -66,6 +84,19 @@ export class AzeroId implements Database {
     return resp.output?.toHuman().Ok.Ok;
   }
 
+  private async fetchA0ResolverAddress(name: string) {
+    name = this.processName(name);
+    const resp: any = await this.contract.query.getAddress(
+      '',
+      {
+        gasLimit: this.maxGasLimit
+      },
+      name
+    );
+
+    return resp.output?.toHuman().Ok.Ok;
+  }
+
   private processName(domain: string) {
     // TODO: maybe add it as a class variable
     const supportedTLDs = ['azero', 'tzero'];
@@ -80,5 +111,17 @@ export class AzeroId implements Database {
     }
 
     return name || '';
+  }
+
+  static getAlias(coinType: string) {
+    const alias = new Map<string, string>([
+      ['0', 'btc'],
+      ['60', 'eth'],
+      ['354', 'dot'],
+      ['434', 'ksm'],
+      ['501', 'sol'],
+    ]);
+
+    return alias.get(coinType);
   }
 }
