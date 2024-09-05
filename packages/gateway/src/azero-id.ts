@@ -3,7 +3,11 @@ import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Database } from './server';
 import { ContractPromise } from '@polkadot/api-contract';
 import type { WeightV2 } from '@polkadot/types/interfaces';
+import { getCoderByCoinType } from "@ensdomains/address-encoder";
+import { createDotAddressDecoder } from '@ensdomains/address-encoder/utils'
+import { hexlify } from 'ethers/lib/utils';
 
+const AZERO_COIN_TYPE = 643;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
 
@@ -37,11 +41,11 @@ export class AzeroId implements Database {
   }
 
   async addr(name: string, coinType: number) {
+    coinType = Number(coinType); // convert BigNumber to number
     console.log("addr", name, coinType);
     
     let value;
-    if (coinType == 643) {
-      // AlephZero
+    if (coinType == AZERO_COIN_TYPE) {
       value = await this.fetchA0ResolverAddress(name);
     } else {
       let alias = AzeroId.getAlias(""+coinType);
@@ -55,7 +59,12 @@ export class AzeroId implements Database {
       }
     }
 
-    value = value ?? (coinType == 60? ZERO_ADDRESS:'0x');
+    if (value === undefined) {
+      value = coinType == 60? ZERO_ADDRESS:'0x';
+    } else {
+      value = AzeroId.encodeAddress(value, coinType);
+    }
+
     return { addr: value, ttl: this.ttl };
   }
 
@@ -123,5 +132,26 @@ export class AzeroId implements Database {
     ]);
 
     return alias.get(coinType);
+  }
+
+  static encodeAddress(addr: string, coinType: number) {
+    const isEvmCoinType = (c: number) => {
+      return c == 60 || (c & 0x80000000)!=0
+    }
+
+    if (coinType == AZERO_COIN_TYPE) {
+      const azeroCoder = createDotAddressDecoder(42);
+      return hexlify(azeroCoder(addr));
+    }
+    if (isEvmCoinType(coinType) && !addr.startsWith('0x')) {
+      addr = '0x' + addr;
+    }
+
+    try {
+      const coder = getCoderByCoinType(coinType);
+      return hexlify(coder.decode(addr));
+    } catch {
+      return addr;
+    }
   }
 }

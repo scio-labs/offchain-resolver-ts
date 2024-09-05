@@ -58,6 +58,7 @@
   "dependencies": {
     "@chainlink/ccip-read-server": "^0.2.1",
     "@chainlink/ethers-ccip-read-provider": "^0.2.3",
+    "@ensdomains/address-encoder": "^1.1.2",
     "@ensdomains/ens-contracts": "^0.0.8",
     "@ensdomains/offchain-resolver-contracts": "^0.2.1",
     "@polkadot/api": "^12.3.1",
