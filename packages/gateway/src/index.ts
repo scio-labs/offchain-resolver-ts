@@ -3,6 +3,8 @@ import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { ethers } from 'ethers';
 import { AzeroId, GasLimit } from './azero-id';
+import supportedTLDs from './supported-tlds.json';
+
 const program = new Command();
 program
   .requiredOption(
@@ -10,7 +12,6 @@ program
     'Private key to sign responses with. Prefix with @ to read from a file'
   )
   .option('--provider-url <string>', 'Provider URL of the substrate chain', 'wss://ws.test.azero.dev')
-  .option('-c --contract <string>', 'Target contract address', '5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD')
   .option('-t --ttl <number>', 'TTL for signatures', '300')
   .option('-p --port <number>', 'Port number to serve on', '8080');
 program.parse(process.argv);
@@ -30,10 +31,12 @@ const defaultGasLimit: GasLimit = {
   proofSize: 1_000_000,
 };
 
+const tldToContractAddress = new Map<string, string>(Object.entries(supportedTLDs));
+
 AzeroId.init(
   parseInt(options.ttl), 
   options.providerUrl, 
-  options.contract, 
+  tldToContractAddress, 
   defaultGasLimit,
 ).then(db => {
   const app = makeApp(signer, '/', db);
