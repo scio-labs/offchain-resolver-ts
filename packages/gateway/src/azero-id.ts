@@ -18,24 +18,29 @@ export interface GasLimit {
 
 export class AzeroId implements Database {
   ttl: number;
-  contract: ContractPromise;
+  tldToContract: Map<string, ContractPromise>;
   maxGasLimit: WeightV2;
 
-  constructor(ttl: number, contract: ContractPromise, maxGasLimit: WeightV2) {
+  constructor(ttl: number, tldToContract: Map<string, ContractPromise>, maxGasLimit: WeightV2) {
     this.ttl = ttl;
-    this.contract = contract;
+    this.tldToContract = tldToContract;
     this.maxGasLimit = maxGasLimit;
   }
 
-  static async init(ttl: number, providerURL: string, contractAddress: string, gasLimit: GasLimit) {
+  static async init(ttl: number, providerURL: string, tldToContractAddress: Map<string, string>, gasLimit: GasLimit) {
     const wsProvider = new WsProvider(providerURL);
     const api = await ApiPromise.create({ provider: wsProvider });
-    const contract = new ContractPromise(api, abi, contractAddress);
+    
+    const tldToContract = new Map<string, ContractPromise>();
+    tldToContractAddress.forEach((addr, tld) => {
+      tldToContract.set(tld, new ContractPromise(api, abi, addr))
+    })
+
     const maxGasLimit = api.registry.createType('WeightV2', gasLimit) as WeightV2;
 
     return new AzeroId(
         ttl,
-        contract,
+        tldToContract,
         maxGasLimit,
     );
   }
@@ -79,9 +84,9 @@ export class AzeroId implements Database {
     return { contenthash: EMPTY_CONTENT_HASH, ttl: this.ttl };
   }
 
-  private async fetchRecord(name: string, key: string) {
-    name = this.processName(name);
-    const resp: any = await this.contract.query.getRecord(
+  private async fetchRecord(domain: string, key: string) {
+    let {name, contract} = this.processName(domain);
+    const resp: any = await contract.query.getRecord(
       '',
       {
         gasLimit: this.maxGasLimit
@@ -93,9 +98,9 @@ export class AzeroId implements Database {
     return resp.output?.toHuman().Ok.Ok;
   }
 
-  private async fetchA0ResolverAddress(name: string) {
-    name = this.processName(name);
-    const resp: any = await this.contract.query.getAddress(
+  private async fetchA0ResolverAddress(domain: string) {
+    let {name, contract} = this.processName(domain);
+    const resp: any = await contract.query.getAddress(
       '',
       {
         gasLimit: this.maxGasLimit
@@ -107,19 +112,18 @@ export class AzeroId implements Database {
   }
 
   private processName(domain: string) {
-    // TODO: maybe add it as a class variable
-    const supportedTLDs = ['azero', 'tzero'];
     const labels = domain.split('.');
     console.log("Labels:", labels);
 
-    const name = labels.shift();
-    if(labels.length != 0) {
-      const tld = labels.join('.');
-      if (!supportedTLDs.includes(tld)) 
-        throw new Error(`TLD (.${tld}) not supported`);
+    const name = labels.shift() || '';
+    const tld = labels.join('.');
+    const contract = this.tldToContract.get(tld);
+
+    if (contract === undefined) {
+      throw new Error(`TLD (.${tld}) not supported`);
     }
 
-    return name || '';
+    return {name, contract};
   }
 
   static getAlias(coinType: string) {
