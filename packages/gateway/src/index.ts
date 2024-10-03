@@ -2,7 +2,8 @@ import { makeApp } from './server';
 import { Command } from 'commander';
 import { readFileSync } from 'fs';
 import { ethers } from 'ethers';
-import { AzeroId, GasLimit } from './azero-id';
+import { AzeroId } from './azero-id';
+import { GasLimit } from './utils';
 import supportedTLDs from './supported-tlds.json';
 
 const program = new Command();

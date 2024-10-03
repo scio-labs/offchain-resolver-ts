@@ -6,15 +6,11 @@ import type { WeightV2 } from '@polkadot/types/interfaces';
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { createDotAddressDecoder } from '@ensdomains/address-encoder/utils'
 import { hexlify } from 'ethers/lib/utils';
+import { GasLimit } from './utils';
 
 const AZERO_COIN_TYPE = 643;
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const EMPTY_CONTENT_HASH = '0x';
-
-export interface GasLimit {
-  refTime: number,
-  proofSize: number,
-}
 
 export class AzeroId implements Database {
   ttl: number;
