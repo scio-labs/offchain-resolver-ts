@@ -1,4 +1,4 @@
-import abi from './metadata.json';
+import abi from './artefacts/azns_registry.json';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Database } from './server';
 import { ContractPromise } from '@polkadot/api-contract';
