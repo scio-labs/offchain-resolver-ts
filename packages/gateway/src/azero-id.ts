@@ -2,9 +2,9 @@ import abi from './artefacts/azns_registry.json';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Database } from './server';
 import { ContractPromise } from '@polkadot/api-contract';
-import type { WeightV2 } from '@polkadot/types/interfaces';
-import { getCoderByCoinType } from "@ensdomains/address-encoder";
-import { createDotAddressDecoder } from '@ensdomains/address-encoder/utils'
+import { WeightV2 } from '@polkadot/types/interfaces';
+import { getCoderByCoinType } from '@ensdomains/address-encoder';
+import { createDotAddressDecoder } from '@ensdomains/address-encoder/utils';
 import { hexlify } from 'ethers/lib/utils';
 import { GasLimit } from './utils';
 
@@ -17,51 +17,59 @@ export class AzeroId implements Database {
   tldToContract: Map<string, ContractPromise>;
   maxGasLimit: WeightV2;
 
-  constructor(ttl: number, tldToContract: Map<string, ContractPromise>, maxGasLimit: WeightV2) {
+  constructor(
+    ttl: number,
+    tldToContract: Map<string, ContractPromise>,
+    maxGasLimit: WeightV2
+  ) {
     this.ttl = ttl;
     this.tldToContract = tldToContract;
     this.maxGasLimit = maxGasLimit;
   }
 
-  static async init(ttl: number, providerURL: string, tldToContractAddress: Map<string, string>, gasLimit: GasLimit) {
+  static async init(
+    ttl: number,
+    providerURL: string,
+    tldToContractAddress: Map<string, string>,
+    gasLimit: GasLimit
+  ) {
     const wsProvider = new WsProvider(providerURL);
     const api = await ApiPromise.create({ provider: wsProvider });
-    
+
     const tldToContract = new Map<string, ContractPromise>();
     tldToContractAddress.forEach((addr, tld) => {
-      tldToContract.set(tld, new ContractPromise(api, abi, addr))
-    })
+      tldToContract.set(tld, new ContractPromise(api, abi, addr));
+    });
 
-    const maxGasLimit = api.registry.createType('WeightV2', gasLimit) as WeightV2;
+    const maxGasLimit = api.registry.createType(
+      'WeightV2',
+      gasLimit
+    ) as WeightV2;
 
-    return new AzeroId(
-        ttl,
-        tldToContract,
-        maxGasLimit,
-    );
+    return new AzeroId(ttl, tldToContract, maxGasLimit);
   }
 
   async addr(name: string, coinType: number) {
     coinType = Number(coinType); // convert BigNumber to number
-    console.log("addr", name, coinType);
-    
+    console.log('addr', name, coinType);
+
     let value;
-    if (coinType == AZERO_COIN_TYPE) {
+    if (coinType === AZERO_COIN_TYPE) {
       value = await this.fetchA0ResolverAddress(name);
     } else {
-      let alias = AzeroId.getAlias(""+coinType);
+      let alias = AzeroId.getAlias('' + coinType);
       if (alias !== undefined) {
-        const serviceKey = "address." + alias;
+        const serviceKey = 'address.' + alias;
         value = await this.fetchRecord(name, serviceKey);
       }
       if (value === undefined) {
-        const serviceKey = "address." + coinType;
+        const serviceKey = 'address.' + coinType;
         value = await this.fetchRecord(name, serviceKey);
       }
     }
 
     if (value === undefined) {
-      value = coinType == 60? ZERO_ADDRESS:'0x';
+      value = coinType === 60 ? ZERO_ADDRESS : '0x';
     } else {
       value = AzeroId.encodeAddress(value, coinType);
     }
@@ -70,36 +78,36 @@ export class AzeroId implements Database {
   }
 
   async text(name: string, key: string) {
-    console.log("text", name, key);
-    const value = await this.fetchRecord(name, key) || '';
+    console.log('text', name, key);
+    const value = (await this.fetchRecord(name, key)) || '';
     return { value, ttl: this.ttl };
   }
 
   contenthash(name: string) {
-    console.log("contenthash", name);
+    console.log('contenthash', name);
     return { contenthash: EMPTY_CONTENT_HASH, ttl: this.ttl };
   }
 
   private async fetchRecord(domain: string, key: string) {
-    let {name, contract} = this.processName(domain);
+    let { name, contract } = this.processName(domain);
     const resp: any = await contract.query.getRecord(
       '',
       {
-        gasLimit: this.maxGasLimit
+        gasLimit: this.maxGasLimit,
       },
       name,
       key
     );
-    
+
     return resp.output?.toHuman().Ok.Ok;
   }
 
   private async fetchA0ResolverAddress(domain: string) {
-    let {name, contract} = this.processName(domain);
+    let { name, contract } = this.processName(domain);
     const resp: any = await contract.query.getAddress(
       '',
       {
-        gasLimit: this.maxGasLimit
+        gasLimit: this.maxGasLimit,
       },
       name
     );
@@ -109,7 +117,7 @@ export class AzeroId implements Database {
 
   private processName(domain: string) {
     const labels = domain.split('.');
-    console.log("Labels:", labels);
+    console.log('Labels:', labels);
 
     const name = labels.shift() || '';
     const tld = labels.join('.');
@@ -119,7 +127,7 @@ export class AzeroId implements Database {
       throw new Error(`TLD (.${tld}) not supported`);
     }
 
-    return {name, contract};
+    return { name, contract };
   }
 
   static getAlias(coinType: string) {
@@ -136,10 +144,10 @@ export class AzeroId implements Database {
 
   static encodeAddress(addr: string, coinType: number) {
     const isEvmCoinType = (c: number) => {
-      return c == 60 || (c & 0x80000000)!=0
-    }
+      return c === 60 || (c & 0x80000000) !== 0;
+    };
 
-    if (coinType == AZERO_COIN_TYPE) {
+    if (coinType === AZERO_COIN_TYPE) {
       const azeroCoder = createDotAddressDecoder(42);
       return hexlify(azeroCoder(addr));
     }
