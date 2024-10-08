@@ -12,17 +12,20 @@ export class Relayer {
   wasm: ContractPromise;
   wasmSigner: KeyringPair;
   wasmGasLimit: WeightV2;
+  bufferDuration: number;
 
   constructor(
     evm: ethers.Contract,
     wasm: ContractPromise,
     wasmSigner: KeyringPair,
-    wasmGasLimit: WeightV2
+    wasmGasLimit: WeightV2,
+    bufferDuration: number // In minutes
   ) {
     this.evm = evm;
     this.wasm = wasm;
     this.wasmSigner = wasmSigner;
     this.wasmGasLimit = wasmGasLimit;
+    this.bufferDuration = bufferDuration * 60 * 1000; // converted to milliseconds
   }
 
   static async init(
@@ -31,7 +34,8 @@ export class Relayer {
     wasmProviderURL: string,
     wasmAddr: string,
     wasmSigner: KeyringPair,
-    wasmGasLimit: GasLimit
+    wasmGasLimit: GasLimit,
+    bufferDuration: number // In minutes
   ): Promise<Relayer> {
     const evm = new ethers.Contract(evmAddr, evmABI, evmSigner);
 
@@ -43,24 +47,39 @@ export class Relayer {
       wasmGasLimit
     ) as WeightV2;
 
-    return new Relayer(evm, wasm, wasmSigner, weightV2);
+    return new Relayer(evm, wasm, wasmSigner, weightV2, bufferDuration);
   }
 
   start() {
     this.evm.on(
       'InitiateRequest',
       (id, name, recipient, yearsToRegister, value, ttl) => {
-        console.log('New request:', Number(id), name, ttl);
-        // TODO: Check ttl is valid
-        this.executeRequest(
-          Number(id),
-          name,
-          recipient,
-          Number(yearsToRegister),
-          value
-        );
+        console.log('New request:', Number(id), name);
+
+        if (this.isTTLInRange(Number(ttl))) {
+          this.executeRequest(
+            Number(id),
+            name,
+            recipient,
+            Number(yearsToRegister),
+            value
+          );
+        } else {
+          // Ignore the request
+          console.log(
+            'Request %d skipped as its expiry-time falls short',
+            Number(id)
+          );
+        }
       }
     );
+  }
+
+  /// @dev ttl is expected to be in seconds
+  isTTLInRange(ttl: number) {
+    ttl = ttl * 1000; // convert seconds to milliseconds
+    const currentTimestamp = Date.now();
+    return currentTimestamp + this.bufferDuration <= ttl;
   }
 
   async executeRequest(

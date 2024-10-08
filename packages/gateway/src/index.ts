@@ -57,6 +57,7 @@ AzeroId.init(
   })
   .then(async () => {
     // TODO: make it configurable
+    const bufferDuration = 10;
     const evmProviderURL = 'https://ethereum-sepolia.publicnode.com';
     const evmProvider = ethers.getDefaultProvider(evmProviderURL);
     const evmSigner = new ethers.Wallet(signer, evmProvider); // Should a separate signer be used?
@@ -74,7 +75,8 @@ AzeroId.init(
       wasmProviderURL,
       wasmRelayerAddr,
       wasmSigner,
-      defaultGasLimit
+      defaultGasLimit,
+      bufferDuration
     );
 
     relayer.start();
