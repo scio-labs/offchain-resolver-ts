@@ -1,4 +1,4 @@
-import { ethers } from 'ethers';
+import { ContractReceipt, ContractTransaction, ethers } from 'ethers';
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { ContractPromise } from '@polkadot/api-contract';
 import { KeyringPair } from '@polkadot/keyring/types';
@@ -26,15 +26,14 @@ export class Relayer {
   }
 
   static async init(
-    evmProviderURL: string,
+    evmSigner: ethers.Signer,
     evmAddr: string,
     wasmProviderURL: string,
     wasmAddr: string,
     wasmSigner: KeyringPair,
     wasmGasLimit: GasLimit
   ): Promise<Relayer> {
-    const evmProvider = ethers.getDefaultProvider(evmProviderURL);
-    const evm = new ethers.Contract(evmAddr, evmABI, evmProvider);
+    const evm = new ethers.Contract(evmAddr, evmABI, evmSigner);
 
     const wsProvider = new WsProvider(wasmProviderURL);
     const api = await ApiPromise.create({ provider: wsProvider });
@@ -113,18 +112,74 @@ export class Relayer {
           if (successEventRecord === undefined) {
             // Failure
             console.log('Failed to register');
+            this.failure(id);
           } else {
             // Success
             const decoded = this.wasm.abi.decodeEvent(successEventRecord);
             const priceInWASM = Number(decoded.args[1]);
             console.log('Registered successfully with price:', priceInWASM);
+
+            const refundInWASM = maxFeesInWASM - priceInWASM;
+            const refundInEVM = this.valueWASM2EVM(refundInWASM);
+            this.success(id, refundInEVM);
           }
         }
       });
+  }
+
+  private async failure(id: number) {
+    const tx: ContractTransaction = await this.evm.failure(id);
+    const receipt: ContractReceipt = await tx.wait();
+
+    const relaySuccess = receipt.events?.some(eve =>
+      isResultInfoEvent(eve, this.evm.address, id, false)
+    );
+
+    if (relaySuccess) {
+      console.log('Failure status relayed back successfully');
+    } else {
+      console.log('Failure status was NOT relayed back');
+    }
+  }
+
+  private async success(id: number, refundInEVM: number) {
+    const tx: ContractTransaction = await this.evm.success(id, refundInEVM);
+    const receipt: ContractReceipt = await tx.wait();
+
+    const relaySuccess = receipt.events?.some(eve =>
+      isResultInfoEvent(eve, this.evm.address, id, true)
+    );
+
+    if (relaySuccess) {
+      console.log('Success status relayed back successfully');
+    } else {
+      // ALERT: RELAYER FAILURE
+      throw new Error('FAILURE: Success status could not be relayed back');
+    }
   }
 
   private valueEVM2WASM(valueInEVM: number) {
     // TODO: set value converter properly
     return valueInEVM + 10000000000000;
   }
+
+  private valueWASM2EVM(valueInEVM: number) {
+    // TODO: set value converter properly
+    if (valueInEVM <= 0) return 0;
+    return 0;
+  }
+}
+
+function isResultInfoEvent(
+  eve: ethers.Event,
+  addr: string,
+  id: number,
+  success: boolean
+): boolean {
+  return (
+    eve.address === addr &&
+    eve.event === 'ResultInfo' &&
+    Number(eve.args?.at(0)) === id &&
+    eve.args?.at(1) === success
+  );
 }

@@ -58,6 +58,8 @@ AzeroId.init(
   .then(async () => {
     // TODO: make it configurable
     const evmProviderURL = 'https://ethereum-sepolia.publicnode.com';
+    const evmProvider = ethers.getDefaultProvider(evmProviderURL);
+    const evmSigner = new ethers.Wallet(signer, evmProvider); // Should a separate signer be used?
     const evmRelayerAddr = '0x2BaD727319377af238a7F6D166494118Ca9D0497';
     const wasmRelayerAddr = '5GNDka5xV9y9nsES2gqYQponJ8vJaAmoJjMUvrqGqPF65q7P';
     const wasmProviderURL = options.providerUrl;
@@ -67,7 +69,7 @@ AzeroId.init(
     const wasmSigner = keyring.createFromUri(seed);
 
     const relayer = await Relayer.init(
-      evmProviderURL,
+      evmSigner,
       evmRelayerAddr,
       wasmProviderURL,
       wasmRelayerAddr,
