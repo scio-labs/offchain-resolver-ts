@@ -6,6 +6,7 @@ import { AzeroId } from './azero-id';
 import { GasLimit } from './utils';
 import { Relayer } from './registration-relayer';
 import { Keyring } from '@polkadot/keyring';
+import { KeyringPair } from '@polkadot/keyring/types';
 import supportedTLDs from './supported-tlds.json';
 
 const program = new Command();
@@ -29,55 +30,93 @@ if (privateKey.startsWith('@')) {
     readFileSync(privateKey.slice(1), { encoding: 'utf-8' })
   );
 }
-const address = ethers.utils.computeAddress(privateKey);
-const signer = new ethers.utils.SigningKey(privateKey);
 
-// TODO: make it configurable
-const defaultGasLimit: GasLimit = {
-  refTime: 100_000_000_000,
-  proofSize: 1_000_000,
-};
+async function gateway(
+  port: number,
+  ttl: number,
+  wasmProviderURL: string,
+  tldToContractAddress: Map<string, string>,
+  wasmGasLimit: GasLimit,
+  evmSigningKey: ethers.utils.SigningKey
+) {
+  const db = await AzeroId.init(
+    ttl,
+    wasmProviderURL,
+    tldToContractAddress,
+    wasmGasLimit
+  );
 
-const tldToContractAddress = new Map<string, string>(
-  Object.entries(supportedTLDs)
-);
+  const app = makeApp(evmSigningKey, '/', db);
+  const address = ethers.utils.computeAddress(evmSigningKey.privateKey);
+  console.log(`Serving on port ${port} with signing address ${address}`);
+  app.listen(port);
+}
 
-AzeroId.init(
-  parseInt(options.ttl),
-  options.providerUrl,
-  tldToContractAddress,
-  defaultGasLimit
-)
-  .then(db => {
-    const app = makeApp(signer, '/', db);
-    console.log(
-      `Serving on port ${options.port} with signing address ${address}`
-    );
-    app.listen(parseInt(options.port));
-  })
-  .then(async () => {
-    // TODO: make it configurable
-    const bufferDuration = 10;
-    const evmProviderURL = 'https://ethereum-sepolia.publicnode.com';
-    const evmProvider = ethers.getDefaultProvider(evmProviderURL);
-    const evmSigner = new ethers.Wallet(signer, evmProvider); // Should a separate signer be used?
-    const evmRelayerAddr = '0x2BaD727319377af238a7F6D166494118Ca9D0497';
-    const wasmRelayerAddr = '5GNDka5xV9y9nsES2gqYQponJ8vJaAmoJjMUvrqGqPF65q7P';
-    const wasmProviderURL = options.providerUrl;
-    const keyring = new Keyring({ type: 'sr25519' });
-    const seed =
-      '0xd5836897dc77e6c87e5cc268abaaa9c661bcf19aea9f0f50a1e149d21ce31eb7'; // public seed
-    const wasmSigner = keyring.createFromUri(seed);
+async function relayer(
+  evmSigner: ethers.Signer,
+  evmRelayerAddr: string,
+  wasmProviderURL: string,
+  wasmRelayerAddr: string,
+  wasmSigner: KeyringPair,
+  wasmGasLimit: GasLimit,
+  bufferDurationInMinutes: number
+) {
+  const relayer = await Relayer.init(
+    evmSigner,
+    evmRelayerAddr,
+    wasmProviderURL,
+    wasmRelayerAddr,
+    wasmSigner,
+    wasmGasLimit,
+    bufferDurationInMinutes
+  );
 
-    const relayer = await Relayer.init(
-      evmSigner,
-      evmRelayerAddr,
-      wasmProviderURL,
-      wasmRelayerAddr,
-      wasmSigner,
-      defaultGasLimit,
-      bufferDuration
-    );
+  relayer.start();
+}
 
-    relayer.start();
-  });
+async function main() {
+  const port = parseInt(options.port);
+  const ttl = parseInt(options.ttl);
+  const wasmProviderURL = options.providerUrl;
+  const tldToContractAddress = new Map<string, string>(
+    Object.entries(supportedTLDs)
+  );
+  const wasmGasLimit: GasLimit = {
+    refTime: 100_000_000_000,
+    proofSize: 1_000_000,
+  };
+  const evmGatewaySigningKey = new ethers.utils.SigningKey(privateKey);
+  const evmRelayerSigningKey = new ethers.utils.SigningKey(privateKey);
+  const evmProviderURL = 'https://ethereum-sepolia.publicnode.com';
+  const evmProvider = ethers.getDefaultProvider(evmProviderURL);
+  const evmSigner = new ethers.Wallet(evmRelayerSigningKey, evmProvider);
+  const evmRelayerAddr = '0x2BaD727319377af238a7F6D166494118Ca9D0497';
+  const wasmRelayerAddr = '5GNDka5xV9y9nsES2gqYQponJ8vJaAmoJjMUvrqGqPF65q7P';
+  const wasmPrivateKey =
+    '0xd5836897dc77e6c87e5cc268abaaa9c661bcf19aea9f0f50a1e149d21ce31eb7'; // public seed
+  const wasmSigner = new Keyring({ type: 'sr25519' }).createFromUri(
+    wasmPrivateKey
+  );
+  const bufferDurationInMinutes = 10;
+
+  await gateway(
+    port,
+    ttl,
+    wasmProviderURL,
+    tldToContractAddress,
+    wasmGasLimit,
+    evmGatewaySigningKey
+  );
+
+  await relayer(
+    evmSigner,
+    evmRelayerAddr,
+    wasmProviderURL,
+    wasmRelayerAddr,
+    wasmSigner,
+    wasmGasLimit,
+    bufferDurationInMinutes
+  );
+}
+
+main();
