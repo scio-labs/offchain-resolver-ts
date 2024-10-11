@@ -53,6 +53,7 @@ spinner.start(`Fetching ENS Address on EVM via Gateway (${gatewayUrl})…`)
 const evmAddress = await viemClient.getEnsAddress({
   name: normalize(ensDomain),
   coinType: 643,
+  // universalResolverAddress: resolver,
 })
 
 const evmAddressSs58 = evmAddress ? new AccountId32(evmAddress).address() : null
@@ -90,14 +91,10 @@ const domainName = domain.split('.')[0]
 const { data: azeroResponse } = await contract.query.getAddress(domainName, {})
 const azeroAddress = azeroResponse.isOk ? azeroResponse.value.address() : null
 if (azeroResponse.isOk && azeroAddress) {
-  spinner.success(
-    `[${azeroChainName}] Resolved address of ${domain}: ${azeroAddress}`,
-  )
+  spinner.success(`[${azeroChainName}] Resolved address of ${domain}: ${azeroAddress}`)
 } else {
   const error = azeroResponse.isErr ? azeroResponse.err.type : 'Unknown error'
-  spinner.error(
-    `[${azeroChainName}] Couldn't resolve address of ${domain}: ${error}`,
-  )
+  spinner.error(`[${azeroChainName}] Couldn't resolve address of ${domain}: ${error}`)
 }
 
 /**

@@ -1,11 +1,9 @@
-import type { HexString } from '@dedot/utils'
 import { getCoderByCoinType } from '@ensdomains/address-encoder'
 import { createDotAddressDecoder } from '@ensdomains/address-encoder/utils'
-import { LegacyClient, MetadataKey, WsProvider } from 'dedot'
+import { LegacyClient, WsProvider } from 'dedot'
 import { Contract, ContractMetadata } from 'dedot/contracts'
 import { toHex } from 'viem'
 import { AznsRegistryContractApi } from '../types/azns-registry'
-import nodeMetadata from './metadata/aleph-node.json'
 import contractMetadata from './metadata/azns-registry.json'
 import { Database } from './server'
 
@@ -27,18 +25,16 @@ export class AzeroIdResolver implements Database {
   }
 
   async getContract(tld: string) {
-    if (this._tldToContract.has(tld)) {
-      return this._tldToContract.get(tld)!
-    }
+    if (!this.tldToContractAddress[tld]) return null
+    if (this._tldToContract.has(tld)) return this._tldToContract.get(tld)!
 
     // Initialize Substrate API
     if (!this.azeroClient) {
+      console.log('nere')
+      // TODO @Dennis Efficiently preload chain metadata
+      // const metadata = nodeMetadata as Record<MetadataKey, HexString>
       const provider = new WsProvider(this.azeroRpcUrl)
-      this.azeroClient = await LegacyClient.new({
-        provider,
-        cacheMetadata: false,
-        metadata: nodeMetadata as Record<MetadataKey, HexString>,
-      })
+      this.azeroClient = await LegacyClient.new({ provider, cacheMetadata: false })
     }
 
     // Initialize Contract Instance
@@ -56,7 +52,6 @@ export class AzeroIdResolver implements Database {
 
   async addr(name: string, coinType: number) {
     coinType = Number(coinType)
-    console.log('addr', name, coinType)
 
     let value
     if (coinType == AZERO_COIN_TYPE) {
@@ -83,13 +78,11 @@ export class AzeroIdResolver implements Database {
   }
 
   async text(name: string, key: string) {
-    console.log('text', name, key)
     const value = (await this.fetchRecord(name, key)) || ''
     return { value, ttl: this.ttl }
   }
 
   contenthash(name: string) {
-    console.log('contenthash', name)
     return { contenthash: EMPTY_CONTENT_HASH, ttl: this.ttl }
   }
 
@@ -117,13 +110,12 @@ export class AzeroIdResolver implements Database {
 
   private async processName(domain: string) {
     const labels = domain.split('.')
-    console.log('Labels:', labels)
 
     const name = labels.shift() || ''
     const tld = labels.join('.')
-    const contract = await this.getContract(tld)
 
-    if (contract === undefined) {
+    const contract = await this.getContract(tld)
+    if (!contract) {
       throw new Error(`TLD (.${tld}) not supported`)
     }
 

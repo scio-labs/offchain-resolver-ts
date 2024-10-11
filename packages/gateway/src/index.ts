@@ -1,10 +1,10 @@
 import { ethers } from 'ethers'
-import { AutoRouter } from 'itty-router'
+import { AutoRouter, AutoRouterType } from 'itty-router'
 import { privateKeyToAccount } from 'viem/accounts'
 import { AzeroIdResolver } from './azero-id-resolver'
-
 import { makeServer } from './server'
 
+let router: AutoRouterType | undefined
 function initRouter(env: any) {
   console.log('Initializing…')
 
@@ -23,7 +23,6 @@ function initRouter(env: any) {
 
   // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
   const router = AutoRouter()
-  router
     .get('/', () => new Response('AZERO.ID Gateway is running… 🌉', { status: 200 }))
     .get(`/:sender/:callData.json`, gateway.handleRequest.bind(gateway))
     .post('/', gateway.handleRequest.bind(gateway))
@@ -35,13 +34,13 @@ function initRouter(env: any) {
 }
 
 export default {
-  async fetch(request: Request, env: any) {
+  fetch(request: Request, env: any) {
     try {
-      const router = initRouter(env)
+      router = router || initRouter(env)
       return router.fetch(request)
     } catch (e) {
       console.error(e)
-      return new Response('xInternal server error', { status: 500 })
+      return new Response('Internal server error', { status: 500 })
     }
   },
 }
