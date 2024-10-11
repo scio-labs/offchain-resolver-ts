@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 *.DS_Store
+.yarn
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -72,8 +73,11 @@ typings/
 # dotenv environment variables file
 .env
 .env.test
-# undocumented cloudflare worker environment variables file
-.dev.vars
+
+# Cloudflare
+*.vars
+!*.vars.example
+.wrangler/
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache
@@ -116,3 +120,6 @@ cache
 !.yarn/versions
 
 secret.yaml
+
+# tsc
+tsconfig.tsbuildinfo
