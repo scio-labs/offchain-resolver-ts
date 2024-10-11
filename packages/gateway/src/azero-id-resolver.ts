@@ -16,13 +16,13 @@ const EMPTY_CONTENT_HASH = '0x'
 export class AzeroIdResolver implements Database {
   ttl: number
   tldToContractAddress: Record<string, string>
-  wsProviderURL: string
-  client: LegacyClient | undefined
+  azeroRpcUrl: string
+  azeroClient: LegacyClient | undefined
   _tldToContract = new Map<string, Contract<AznsRegistryContractApi>>()
 
-  constructor(ttl: number, wsProviderURL: string, tldToContractAddress: Record<string, string>) {
+  constructor(ttl: number, azeroRpcUrl: string, tldToContractAddress: Record<string, string>) {
     this.ttl = ttl
-    this.wsProviderURL = wsProviderURL
+    this.azeroRpcUrl = azeroRpcUrl
     this.tldToContractAddress = tldToContractAddress
   }
 
@@ -32,24 +32,24 @@ export class AzeroIdResolver implements Database {
     }
 
     // Initialize Substrate API
-    if (!this.client) {
-      const provider = new WsProvider(this.wsProviderURL)
-      this.client = await LegacyClient.new({
+    if (!this.azeroClient) {
+      const provider = new WsProvider(this.azeroRpcUrl)
+      this.azeroClient = await LegacyClient.new({
         provider,
         cacheMetadata: false,
         metadata: nodeMetadata as Record<MetadataKey, HexString>,
-      })  
+      })
     }
 
     // Initialize Contract Instance
     const defaultCaller = '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY' // Alice
-      const contract = new Contract<AznsRegistryContractApi>(
-        this.client,
+    const contract = new Contract<AznsRegistryContractApi>(
+      this.azeroClient,
       contractMetadata as ContractMetadata,
-      this.tldToContractAddress[tld]  ,
+      this.tldToContractAddress[tld],
       { defaultCaller },
     )
-      this._tldToContract.set(tld, contract)
+    this._tldToContract.set(tld, contract)
 
     return contract
   }

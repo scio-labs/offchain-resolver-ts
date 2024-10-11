@@ -12,18 +12,10 @@
     "format": "prettier . --check",
     "format:fix": "prettier . --write"
   },
-  "prettier": {
-    "printWidth": 100,
-    "semi": false,
-    "singleQuote": true,
-    "trailingComma": "all"
-  },
   "devDependencies": {
     "@types/bun": "latest",
     "@wagmi/cli": "^2.1.16",
     "dedot": "^0.6.0",
-    "prettier": "^3.3.3",
-    "typescript": "^5.6.3",
     "viem": "^2.21.22",
     "yocto-spinner": "^0.1.0"
   }

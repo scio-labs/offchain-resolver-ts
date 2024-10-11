@@ -1,35 +1,44 @@
 import { ethers } from 'ethers'
+import { AutoRouter } from 'itty-router'
 import { privateKeyToAccount } from 'viem/accounts'
 import { AzeroIdResolver } from './azero-id-resolver'
-import { makeApp } from './server'
 
-function initApp(env: any) {
-  console.log('Initializing app…')
+import { makeServer } from './server'
+
+function initRouter(env: any) {
+  console.log('Initializing…')
 
   // Destructure environment variables
-  const { OG_PRIVATE_KEY, OG_TTL, WS_PROVIDER_URL, SUPPORTED_TLDS } = env
-  if (!OG_PRIVATE_KEY || !OG_TTL || !WS_PROVIDER_URL || !Object.keys(SUPPORTED_TLDS || {}).length) {
+  const { OG_PRIVATE_KEY, SUPPORTED_TLDS, OG_TTL, AZERO_RPC_URL } = env
+  if (!Object.keys(SUPPORTED_TLDS || {}).length || !OG_PRIVATE_KEY || !OG_TTL || !AZERO_RPC_URL) {
     throw new Error('Missing environment variables')
   }
 
   // Initialize the Database-like Resolver
-  const db = new AzeroIdResolver(parseInt(OG_TTL), WS_PROVIDER_URL, SUPPORTED_TLDS  )
+  const db = new AzeroIdResolver(parseInt(OG_TTL), AZERO_RPC_URL, SUPPORTED_TLDS)
 
   // Initialize the CCIP-Read Handler
   const signer = new ethers.utils.SigningKey(OG_PRIVATE_KEY)
-  const app = makeApp(signer, '/', db)
+  const gateway = makeServer(signer, db)
+
+  // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
+  const router = AutoRouter()
+  router
+    .get('/', () => new Response('AZERO.ID Gateway is running… 🌉', { status: 200 }))
+    .get(`/:sender/:callData.json`, gateway.handleRequest.bind(gateway))
+    .post('/', gateway.handleRequest.bind(gateway))
 
   const { address } = privateKeyToAccount(OG_PRIVATE_KEY)
-  console.log(`Initialized app with signing address ${address}`)
+  console.log(`Initialized with signing address ${address}`)
 
-  return app
+  return router
 }
 
 export default {
   async fetch(request: Request, env: any) {
     try {
-      const app = initApp(env)
-      return app.fetch(request)
+      const router = initRouter(env)
+      return router.fetch(request)
     } catch (e) {
       console.error(e)
       return new Response('xInternal server error', { status: 500 })

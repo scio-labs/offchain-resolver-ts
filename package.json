@@ -1,26 +1,40 @@
 {
-  "name": "@ensdomains/offchain-resolver",
+  "name": "@scio-labs/azero-offchain-resolver",
   "version": "0.0.1",
-  "description": "Packages for an ENS offchain resolver",
-  "main": "index.js",
-  "repository": "git@github.com:ensdomains/offchain-resolver.git",
-  "author": "Nick Johnson <arachnid@notdot.net>",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "engineStrict": true,
+  "packageManager": "bun@1.1.30",
+  "type": "module",
+  "description": "Packages for an ENS-compatible Aleph Zero offchain resolver",
+  "repository": "git@github.com:scio-labs/offchain-resolver-ts.git",
+  "author": "Scio Labs <hello@scio.xyz> (https://scio.xyz)",
   "license": "MIT",
   "workspaces": [
-    "packages/contracts",
-    "packages/gateway",
-    "packages/gateway-worker",
-    "packages/client"
+    "packages/*"
   ],
-  "private": true,
-  "scripts": {
-    "start:node": "yarn workspace @ensdomains/offchain-resolver-contracts start",
-    "start:gateway": "yarn workspace @ensdomains/offchain-resolver-gateway start",
-    "start:client": "yarn workspace @ensdomains/offchain-resolver-client start",
-    "test": "yarn workspaces run test",
-    "lint": "yarn workspaces run lint",
-    "build": "yarn workspaces run build",
-    "docs": "typedoc --entryPointStrategy packages packages/server packages/ethers-ccip-read-provider",
-    "clean": "rm -fr node_modules && yarn workspaces run clean"
+  "trustedDependencies": [
+    "@ensdomains/ens-contracts",
+    "@trufflesuite/bigint-buffer",
+    "bufferutil",
+    "core-js",
+    "core-js-pure",
+    "es5-ext",
+    "esbuild",
+    "keccak",
+    "leveldown",
+    "postinstall-postinstall",
+    "secp256k1",
+    "utf-8-validate",
+    "web3",
+    "web3-bzz",
+    "web3-shh",
+    "workerd"
+  ],
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
   }
 }
