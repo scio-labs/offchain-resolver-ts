@@ -1,35 +1,15 @@
 import { makeApp } from './server';
-import { Command } from 'commander';
-import { readFileSync } from 'fs';
 import { ethers } from 'ethers';
 import { AzeroId } from './azero-id';
 import { GasLimit } from './utils';
 import { Relayer } from './registration-relayer';
 import { Keyring } from '@polkadot/keyring';
 import { KeyringPair } from '@polkadot/keyring/types';
+import { waitReady } from '@polkadot/wasm-crypto';
 import supportedTLDs from './supported-tlds.json';
+import dotenv from 'dotenv';
 
-const program = new Command();
-program
-  .requiredOption(
-    '-k --private-key <key>',
-    'Private key to sign responses with. Prefix with @ to read from a file'
-  )
-  .option(
-    '--provider-url <string>',
-    'Provider URL of the substrate chain',
-    'wss://ws.test.azero.dev'
-  )
-  .option('-t --ttl <number>', 'TTL for signatures', '300')
-  .option('-p --port <number>', 'Port number to serve on', '8080');
-program.parse(process.argv);
-const options = program.opts();
-let privateKey = options.privateKey;
-if (privateKey.startsWith('@')) {
-  privateKey = ethers.utils.arrayify(
-    readFileSync(privateKey.slice(1), { encoding: 'utf-8' })
-  );
-}
+dotenv.config();
 
 async function gateway(
   port: number,
@@ -75,9 +55,10 @@ async function relayer(
 }
 
 async function main() {
-  const port = parseInt(options.port);
-  const ttl = parseInt(options.ttl);
-  const wasmProviderURL = options.providerUrl;
+  const port = parseInt(process.env.PORT || '8080');
+  const ttl = parseInt(process.env.TTL || '300');
+  const wasmProviderURL =
+    process.env.WASM_PROVIDER_URL || 'wss://ws.test.azero.dev';
   const tldToContractAddress = new Map<string, string>(
     Object.entries(supportedTLDs)
   );
@@ -85,19 +66,26 @@ async function main() {
     refTime: 100_000_000_000,
     proofSize: 1_000_000,
   };
-  const evmGatewaySigningKey = new ethers.utils.SigningKey(privateKey);
-  const evmRelayerSigningKey = new ethers.utils.SigningKey(privateKey);
-  const evmProviderURL = 'https://ethereum-sepolia.publicnode.com';
-  const evmProvider = ethers.getDefaultProvider(evmProviderURL);
-  const evmSigner = new ethers.Wallet(evmRelayerSigningKey, evmProvider);
-  const evmRelayerAddr = '0x2BaD727319377af238a7F6D166494118Ca9D0497';
-  const wasmRelayerAddr = '5GNDka5xV9y9nsES2gqYQponJ8vJaAmoJjMUvrqGqPF65q7P';
-  const wasmPrivateKey =
-    '0xd5836897dc77e6c87e5cc268abaaa9c661bcf19aea9f0f50a1e149d21ce31eb7'; // public seed
-  const wasmSigner = new Keyring({ type: 'sr25519' }).createFromUri(
-    wasmPrivateKey
+  const evmGatewaySigningKey = new ethers.utils.SigningKey(
+    process.env.GATEWAY_SIGNER_KEY || ''
   );
-  const bufferDurationInMinutes = 10;
+  const evmRelayerSigningKey = new ethers.utils.SigningKey(
+    process.env.EVM_PRIVATE_KEY || ''
+  );
+  const evmProvider = ethers.getDefaultProvider(
+    process.env.EVM_PROVIDER_URL || 'https://ethereum-sepolia.publicnode.com'
+  );
+  const evmSigner = new ethers.Wallet(evmRelayerSigningKey, evmProvider);
+  const evmRelayerAddr = process.env.EVM_RELAYER_CONTRACT || '';
+  const wasmRelayerAddr = process.env.WASM_RELAYER_CONTRACT || '';
+  const wasmSigner = await waitReady().then(() =>
+    new Keyring({ type: 'sr25519' }).createFromUri(
+      process.env.WASM_PRIVATE_KEY || ''
+    )
+  );
+  const bufferDurationInMinutes = parseInt(
+    process.env.BUFFER_DURATION_IN_MIN || '10'
+  );
 
   await gateway(
     port,
