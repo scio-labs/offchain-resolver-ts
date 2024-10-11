@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -eu
 
-# Can only be overwritten from the .env file, not from the command line!
-NETWORK=sepolia
-
-# Load .env
+# Load Environment
 source .env
 
-# Deploy OffchainResolver
-npx hardhat --network $NETWORK deploy --tags demo
+# Clean
+bun run clean
+
+# Deploy & Verify OffchainResolver
+bunx hardhat --network $NETWORK deploy --tags gateway --reset
