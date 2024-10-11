@@ -1,70 +1,49 @@
 {
-  "version": "0.2.1",
+  "name": "@scio-labs/azero-offchain-resolver-gateway",
+  "version": "0.0.1",
+  "repository": "git@github.com:scio-labs/offchain-resolver-ts.git",
+  "author": "Scio Labs <hello@scio.xyz> (https://scio.xyz)",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "files": [
     "dist",
-    "src"
+    "src",
+    "types"
   ],
-  "engines": {
-    "node": ">=10"
-  },
   "scripts": {
-    "start": "node dist/index.js",
-    "build": "tsdx build",
-    "test": "tsdx test",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
-    "size": "size-limit",
-    "analyze": "size-limit --why",
+    "dev": "lsof -ti:8080 | xargs kill && wrangler dev --remote --env testnet",
+    "deploy:testnet": "wrangler deploy --env testnet",
+    "deploy:mainnet": "wrangler deploy --env mainnet",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier . --check",
+    "format:fix": "prettier . --write",
     "clean": "rm -fr node_modules dist"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "tsdx lint"
-    }
-  },
   "prettier": {
-    "printWidth": 80,
-    "semi": true,
+    "printWidth": 100,
+    "semi": false,
     "singleQuote": true,
-    "trailingComma": "es5"
+    "trailingComma": "all"
   },
-  "name": "@ensdomains/offchain-resolver-gateway",
-  "author": "Nick Johnson",
-  "module": "dist/gateway.esm.js",
-  "size-limit": [
-    {
-      "path": "dist/gateway.cjs.production.min.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "dist/gateway.esm.js",
-      "limit": "10 KB"
-    }
-  ],
   "devDependencies": {
-    "@size-limit/preset-small-lib": "^7.0.4",
-    "@types/chai-as-promised": "^7.1.4",
-    "chai-as-promised": "^7.1.1",
-    "ganache-cli": "^6.12.2",
-    "husky": "^7.0.4",
-    "size-limit": "^7.0.4",
-    "tsdx": "^0.14.1",
-    "tslib": "^2.3.1",
-    "typescript": "^4.5.4"
+    "@cloudflare/workers-types": "^4.20241004.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3",
+    "wrangler": "^3.80.3"
   },
   "dependencies": {
-    "@chainlink/ccip-read-server": "^0.2.1",
     "@chainlink/ethers-ccip-read-provider": "^0.2.3",
     "@ensdomains/address-encoder": "^1.1.2",
-    "@ensdomains/ens-contracts": "^0.0.8",
+    "@polkadot/api": "^14.0.1",
+    "@polkadot/api-contract": "^14.0.1",
+    "dedot": "^0.6.0",
+    "viem": "^2.21.22",
+    "@ensdomains/ccip-read-cf-worker": "^0.0.3",
+    "@ensdomains/ens-contracts": "^1.2.2",
     "@ensdomains/offchain-resolver-contracts": "^0.2.1",
-    "@polkadot/api": "^12.3.1",
-    "@polkadot/api-contract": "^12.3.1",
-    "commander": "^8.3.0",
-    "dotenv": "^15.0.0",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "itty-router": "^5.0.18"
   }
 }
