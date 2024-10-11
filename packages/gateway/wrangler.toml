@@ -19,7 +19,7 @@ port = 8080
 [build]
 command = "bun run build"
 
-# Testnet (Aleph Zero Testnet)
+# Testnet (Aleph Zero Testnet & Ethereum Sepolia)
 
 [env.testnet]
 name = "tzero-id-gateway"
@@ -29,11 +29,12 @@ pattern = "tzero-id-gateway.nameverse.io"
 custom_domain = true
 
 [env.testnet.vars]
+SUPPORTED_TLDS = { "tzero-id.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD", "tzero.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD" }
 OG_TTL = "60"
 AZERO_RPC_URL = "wss://ws.test.azero.dev"
-SUPPORTED_TLDS = { "tzero-id.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD", "tzero.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD" }
+EVM_RPC_BASE_URL = "https://sepolia.infura.io/v3"
 
-# Mainnet (Aleph Zero Mainnet)
+# Mainnet (Aleph Zero Mainnet & Ethereum Mainnet)
 
 [env.mainnet]
 name = "azero-id-gateway"
@@ -43,7 +44,8 @@ pattern = "azero-id-gateway.nameverse.io"
 custom_domain = true
 
 [env.mainnet.vars]
-OG_TTL = "60"
-AZERO_RPC_URL = "wss://ws.azero.dev"
 SUPPORTED_TLDS = { "azero-id.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf" }
 # SUPPORTED_TLDS = { "azero-id.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf", "azero.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf" }
+OG_TTL = "60"
+AZERO_RPC_URL = "wss://ws.azero.dev"
+EVM_RPC_BASE_URL = "https://mainnet.infura.io/v3"

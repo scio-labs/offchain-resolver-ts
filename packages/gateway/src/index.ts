@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import { AutoRouter, AutoRouterType } from 'itty-router'
 import { privateKeyToAccount } from 'viem/accounts'
+import { AzeroIdRelayer } from './azero-id-relayer'
 import { AzeroIdResolver } from './azero-id-resolver'
 import { makeServer } from './server'
 
@@ -9,8 +10,22 @@ function initRouter(env: any) {
   console.log('Initializing…')
 
   // Destructure environment variables
-  const { OG_PRIVATE_KEY, SUPPORTED_TLDS, OG_TTL, AZERO_RPC_URL } = env
-  if (!Object.keys(SUPPORTED_TLDS || {}).length || !OG_PRIVATE_KEY || !OG_TTL || !AZERO_RPC_URL) {
+  const {
+    OG_PRIVATE_KEY,
+    SUPPORTED_TLDS,
+    OG_TTL,
+    AZERO_RPC_URL,
+    EVM_RPC_BASE_URL,
+    INFURA_API_KEY,
+  } = env
+  if (
+    !Object.keys(SUPPORTED_TLDS || {}).length ||
+    !OG_PRIVATE_KEY ||
+    !OG_TTL ||
+    !AZERO_RPC_URL ||
+    !EVM_RPC_BASE_URL ||
+    !INFURA_API_KEY
+  ) {
     throw new Error('Missing environment variables')
   }
 
@@ -21,14 +36,21 @@ function initRouter(env: any) {
   const signer = new ethers.utils.SigningKey(OG_PRIVATE_KEY)
   const gateway = makeServer(signer, db)
 
+  // Initialize the Relayer
+  const evmRpcUrl = `${EVM_RPC_BASE_URL}/${INFURA_API_KEY}`
+  const relayer = new AzeroIdRelayer(AZERO_RPC_URL, evmRpcUrl)
+
   // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
   const router = AutoRouter()
-    .get('/', () => new Response('AZERO.ID Gateway is running… 🌉', { status: 200 }))
+    .get('/', () => new Response('AZERO.ID Gateway & Relayer are running… 🌉', { status: 200 }))
+    // Gateway
     .get(`/:sender/:callData.json`, gateway.handleRequest.bind(gateway))
     .post('/', gateway.handleRequest.bind(gateway))
+    // Relayer
+    .post(`/relay`, relayer.handleRequest.bind(relayer))
 
   const { address } = privateKeyToAccount(OG_PRIVATE_KEY)
-  console.log(`Initialized with signing address ${address}`)
+  console.log(`Initialized Gateway & Relayer with Signing Address ${address}`)
 
   return router
 }
