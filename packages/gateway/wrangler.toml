@@ -1,0 +1,49 @@
+account_id = "702b4f69f0033f956c18b119f81ea1d6"
+
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+main = "./src/index.ts"
+
+workers_dev = false
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[dev]
+port = 8080
+
+[build]
+command = "bun run build"
+
+# Testnet (Aleph Zero Testnet)
+
+[env.testnet]
+name = "tzero-id-gateway"
+
+[env.testnet.route]
+pattern = "tzero-id-gateway.nameverse.io"
+custom_domain = true
+
+[env.testnet.vars]
+OG_TTL = "60"
+AZERO_RPC_URL = "wss://ws.test.azero.dev"
+SUPPORTED_TLDS = { "tzero-id.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD", "tzero.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD" }
+
+# Mainnet (Aleph Zero Mainnet)
+
+[env.mainnet]
+name = "azero-id-gateway"
+
+[env.mainnet.route]
+pattern = "azero-id-gateway.nameverse.io"
+custom_domain = true
+
+[env.mainnet.vars]
+OG_TTL = "60"
+AZERO_RPC_URL = "wss://ws.azero.dev"
+SUPPORTED_TLDS = { "azero-id.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf" }
+# SUPPORTED_TLDS = { "azero-id.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf", "azero.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf" }

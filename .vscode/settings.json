@@ -1,0 +1,15 @@
+{
+  "search.useIgnoreFiles": true,
+  "search.useGlobalIgnoreFiles": true,
+  "search.useParentIgnoreFiles": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit",
+    "source.fixAll": "explicit"
+  },
+  "[javascriptreact][typescriptreact][javascript][typescript][markdown][html][css][scss][sass][json][yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "javascript.updateImportsOnFileMove.enabled": "always"
+}

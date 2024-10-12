@@ -1,45 +1,46 @@
-import { makeApp } from './server';
-import { Command } from 'commander';
-import { readFileSync } from 'fs';
-import { ethers } from 'ethers';
-import { AzeroId, GasLimit } from './azero-id';
-import supportedTLDs from './supported-tlds.json';
+import { ethers } from 'ethers'
+import { AutoRouter, AutoRouterType } from 'itty-router'
+import { privateKeyToAccount } from 'viem/accounts'
+import { AzeroIdResolver } from './azero-id-resolver'
+import { makeServer } from './server'
 
-const program = new Command();
-program
-  .requiredOption(
-    '-k --private-key <key>',
-    'Private key to sign responses with. Prefix with @ to read from a file'
-  )
-  .option('--provider-url <string>', 'Provider URL of the substrate chain', 'wss://ws.test.azero.dev')
-  .option('-t --ttl <number>', 'TTL for signatures', '300')
-  .option('-p --port <number>', 'Port number to serve on', '8080');
-program.parse(process.argv);
-const options = program.opts();
-let privateKey = options.privateKey;
-if (privateKey.startsWith('@')) {
-  privateKey = ethers.utils.arrayify(
-    readFileSync(privateKey.slice(1), { encoding: 'utf-8' })
-  );
+let router: AutoRouterType | undefined
+function initRouter(env: any) {
+  console.log('Initializing…')
+
+  // Destructure environment variables
+  const { OG_PRIVATE_KEY, SUPPORTED_TLDS, OG_TTL, AZERO_RPC_URL } = env
+  if (!Object.keys(SUPPORTED_TLDS || {}).length || !OG_PRIVATE_KEY || !OG_TTL || !AZERO_RPC_URL) {
+    throw new Error('Missing environment variables')
+  }
+
+  // Initialize the Database-like Resolver
+  const db = new AzeroIdResolver(parseInt(OG_TTL), AZERO_RPC_URL, SUPPORTED_TLDS)
+
+  // Initialize the CCIP-Read Handler
+  const signer = new ethers.utils.SigningKey(OG_PRIVATE_KEY)
+  const gateway = makeServer(signer, db)
+
+  // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
+  const router = AutoRouter()
+    .get('/', () => new Response('AZERO.ID Gateway is running… 🌉', { status: 200 }))
+    .get(`/:sender/:callData.json`, gateway.handleRequest.bind(gateway))
+    .post('/', gateway.handleRequest.bind(gateway))
+
+  const { address } = privateKeyToAccount(OG_PRIVATE_KEY)
+  console.log(`Initialized with signing address ${address}`)
+
+  return router
 }
-const address = ethers.utils.computeAddress(privateKey);
-const signer = new ethers.utils.SigningKey(privateKey);
 
-// TODO: make it configurable
-const defaultGasLimit: GasLimit = {
-  refTime: 10_000_000_000,
-  proofSize: 1_000_000,
-};
-
-const tldToContractAddress = new Map<string, string>(Object.entries(supportedTLDs));
-
-AzeroId.init(
-  parseInt(options.ttl), 
-  options.providerUrl, 
-  tldToContractAddress, 
-  defaultGasLimit,
-).then(db => {
-  const app = makeApp(signer, '/', db);
-  console.log(`Serving on port ${options.port} with signing address ${address}`);
-  app.listen(parseInt(options.port));
-});
+export default {
+  fetch(request: Request, env: any) {
+    try {
+      router = router || initRouter(env)
+      return router.fetch(request)
+    } catch (e) {
+      console.error(e)
+      return new Response('Internal server error', { status: 500 })
+    }
+  },
+}
