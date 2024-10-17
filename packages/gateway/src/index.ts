@@ -17,6 +17,8 @@ function initRouter(env: any) {
     AZERO_RPC_URL,
     EVM_RPC_BASE_URL,
     INFURA_API_KEY,
+    EVM_RELAYER_CONTRACT,
+    BUFFER_DURATION_IN_MIN,
   } = env
   if (
     !Object.keys(SUPPORTED_TLDS || {}).length ||
@@ -24,7 +26,9 @@ function initRouter(env: any) {
     !OG_TTL ||
     !AZERO_RPC_URL ||
     !EVM_RPC_BASE_URL ||
-    !INFURA_API_KEY
+    !INFURA_API_KEY ||
+    !EVM_RELAYER_CONTRACT ||
+    !BUFFER_DURATION_IN_MIN
   ) {
     throw new Error('Missing environment variables')
   }
@@ -38,7 +42,12 @@ function initRouter(env: any) {
 
   // Initialize the Relayer
   const evmRpcUrl = `${EVM_RPC_BASE_URL}/${INFURA_API_KEY}`
-  const relayer = new AzeroIdRelayer(AZERO_RPC_URL, evmRpcUrl)
+  const relayer = new AzeroIdRelayer(
+    AZERO_RPC_URL,
+    evmRpcUrl,
+    EVM_RELAYER_CONTRACT,
+    BUFFER_DURATION_IN_MIN
+  )
 
   // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
   const router = AutoRouter()

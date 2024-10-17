@@ -9,23 +9,32 @@ import {
   WaitForTransactionReceiptReturnType,
 } from 'viem'
 import { mainnet, sepolia } from 'viem/chains'
-import { offchainResolverAbi } from '../wagmi.generated'
+import { registrationProxyAbi } from '../wagmi.generated'
 import nodeMetadata from './metadata/aleph-node.json'
 
 class AzeroIdRelayer {
   private azeroRpcUrl: string
   private evmRpcUrl: string
   private evmChain: Chain
+  private evmRelayerAddress: `0x${string}`
+  private bufferDuration: number
   private _azeroClient: LegacyClient | undefined
   private _evmClient: PublicClient | undefined
 
-  constructor(azeroRpcUrl: string, evmRpcUrl: string) {
+  constructor(
+    azeroRpcUrl: string,
+    evmRpcUrl: string,
+    evmRelayerAddress: `0x${string}`,
+    bufferDurationInMinutes: number
+  ) {
     this.azeroRpcUrl = azeroRpcUrl
     this.evmRpcUrl = evmRpcUrl
     this.evmChain = evmRpcUrl.includes('mainnet') ? mainnet : sepolia
     if (!evmRpcUrl.includes('mainnet') && !evmRpcUrl.includes('sepolia')) {
       throw new Error('Invalid EVM RPC URL')
     }
+    this.evmRelayerAddress = evmRelayerAddress
+    this.bufferDuration = bufferDurationInMinutes * 60 * 1000; // converted to milliseconds
   }
 
   private async getAzeroClient() {
@@ -49,7 +58,6 @@ class AzeroIdRelayer {
   }
 
   async handleRequest(request: Request): Promise<Response> {
-    const azeroClient = await this.getAzeroClient()
     const evmClient = this.getEvmClient()
 
     const { txHash } = await request.json()
@@ -68,47 +76,69 @@ class AzeroIdRelayer {
       return new Response('Transaction not found', { status: 404 })
     }
 
-    console.log('Transaction Receipt:', receipt)
-    // Transaction Receipt: Object {
-    //   blockHash: 0x49907d495a6c35597a816a4d6b050794742645ca8acc4d19a3643884a2b92ab3,
-    //   blockNumber: 6855444n,
-    //   contractAddress: 0x5cf63c14b82c6e1b95023d8d23e682d12761f56c,
-    //   cumulativeGasUsed: 10954755n,
-    //   effectiveGasPrice: 22625898128n
-    //   ...
-    // }
-
     // Parse the events from the transaction receipt
     const logs = parseEventLogs({
       logs: receipt.logs,
-      abi: offchainResolverAbi,
+      abi: registrationProxyAbi,
+      eventName: 'InitiateRequest'
     })
 
-    console.log('Event Logs:', logs[0], logs[1])
-    // Event Logs: Object {
-    //   eventName: OwnershipTransferred,
-    //   args: Object,
-    //   address: 0x5cf63c14b82c6e1b95023d8d23e682d12761f56c,
-    //   blockHash: 0x49907d495a6c35597a816a4d6b050794742645ca8acc4d19a3643884a2b92ab3,
-    //   blockNumber: 6855444n
-    //   ...
-    // } Object {
-    //   eventName: NewSigners,
-    //   args: Object,
-    //   address: 0x5cf63c14b82c6e1b95023d8d23e682d12761f56c,
-    //   blockHash: 0x49907d495a6c35597a816a4d6b050794742645ca8acc4d19a3643884a2b92ab3,
-    //   blockNumber: 6855444n
-    //   ...
-    // }
+    logs.forEach((log) => {
+      if (log.address !== this.evmRelayerAddress) return
+      const { id, name, recipient, yearsToRegister, value, ttl } = log.args
 
-    // TODO @Nimish
-
-    // Execute something on Aleph Zero
-    // IMPORTANT: Create contract types via https://docs.dedot.dev/ink-smart-contracts/generate-types-and-apis (like `../types/azns-registry/`)
-    // const contract = new Contract({client: azeroClient, address: '…'})
-    // const x = await contract.tx.
+      this.processRegistrationRequest(
+        Number(id),
+        name,
+        recipient,
+        yearsToRegister,
+        Number(value),
+        Number(ttl)
+      )
+    })
 
     return new Response('Not Implemented', { status: 501 })
+  }
+
+  private async processRegistrationRequest(
+    id: number,
+    name: string,
+    recipient: string,
+    yearsToRegister: number,
+    value: number,
+    ttl: number
+  ) {
+    console.log('New request:', id, name);
+
+    if (this.isTTLValid(ttl)) {
+      this.relayRequestToWasm(
+        Number(id),
+        name,
+        recipient,
+        Number(yearsToRegister),
+        value
+      );
+    } else {
+      // Ignore the request
+      console.log(
+        `Request ${Number(id)} skipped as its expiry-time falls short`
+      );
+    }
+  }
+
+  private async relayRequestToWasm(
+    id: number,
+    name: string,
+    recipient: string,
+    yearsToRegister: number,
+    maxFeesInEVM: number
+  ) { }
+
+  /// @dev ttl is expected to be in seconds
+  isTTLValid(ttl: number) {
+    ttl = ttl * 1000; // convert seconds to milliseconds
+    const currentTimestamp = Date.now();
+    return currentTimestamp + this.bufferDuration <= ttl;
   }
 }
 
