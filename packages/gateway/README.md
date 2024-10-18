@@ -13,7 +13,11 @@ bun install
 # Create `.dev.vars` & Set your private key
 cp .dev.vars.example .dev.vars
 
-# Edit `wrangler.toml` if needed
+# [Optional] Edit `wrangler.toml` if needed
+
+# [Optional] (Re)generate contract types from (Solidity & ink!)
+bunx wagmi generate
+bunx dedot typink -m /path/to/contract/metadata.json -o ./types/contract-name
 
 # Run development server
 bun run dev
