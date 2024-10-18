@@ -1,5 +1,6 @@
-import type { HexString } from '@dedot/utils'
-import { LegacyClient, type MetadataKey, WsProvider } from 'dedot'
+import { KeyringPair } from '@polkadot/keyring/types'
+import { LegacyClient, WsProvider } from 'dedot'
+import { Contract, ContractMetadata } from 'dedot/contracts'
 import {
   type Chain,
   createPublicClient,
@@ -9,22 +10,28 @@ import {
   WaitForTransactionReceiptReturnType,
 } from 'viem'
 import { mainnet, sepolia } from 'viem/chains'
+import { WasmContractApi } from '../types/wasm'
 import { registrationProxyAbi } from '../wagmi.generated'
-import nodeMetadata from './metadata/aleph-node.json'
+import wasmRelayerMetadata from './metadata/wasmRelayer.json'
 
 class AzeroIdRelayer {
   private azeroRpcUrl: string
   private evmRpcUrl: string
   private evmChain: Chain
   private evmRelayerAddress: `0x${string}`
+  private wasmRelayerAddress: string
+  private wasmSigner: KeyringPair
   private bufferDuration: number
   private _azeroClient: LegacyClient | undefined
   private _evmClient: PublicClient | undefined
+  private _wasmRelayerContract: Contract<WasmContractApi> | undefined
 
   constructor(
     azeroRpcUrl: string,
     evmRpcUrl: string,
     evmRelayerAddress: `0x${string}`,
+    wasmRelayerAddress: string,
+    wasmSigner: KeyringPair,
     bufferDurationInMinutes: number
   ) {
     this.azeroRpcUrl = azeroRpcUrl
@@ -34,6 +41,8 @@ class AzeroIdRelayer {
       throw new Error('Invalid EVM RPC URL')
     }
     this.evmRelayerAddress = evmRelayerAddress
+    this.wasmRelayerAddress = wasmRelayerAddress
+    this.wasmSigner = wasmSigner
     this.bufferDuration = bufferDurationInMinutes * 60 * 1000; // converted to milliseconds
   }
 
@@ -43,7 +52,6 @@ class AzeroIdRelayer {
       this._azeroClient = await LegacyClient.new({
         provider,
         cacheMetadata: false,
-        metadata: nodeMetadata as Record<MetadataKey, HexString>,
       })
     }
     return this._azeroClient
@@ -55,6 +63,17 @@ class AzeroIdRelayer {
       this._evmClient = createPublicClient({ chain: this.evmChain, transport })
     }
     return this._evmClient
+  }
+
+  private async getWasmRelayerContract() {
+    if (!this._wasmRelayerContract) {
+      this._wasmRelayerContract = new Contract<WasmContractApi>(
+        await this.getAzeroClient(),
+        wasmRelayerMetadata as ContractMetadata,
+        this.wasmRelayerAddress
+      )
+    }
+    return this._wasmRelayerContract
   }
 
   async handleRequest(request: Request): Promise<Response> {
@@ -83,36 +102,36 @@ class AzeroIdRelayer {
       eventName: 'InitiateRequest'
     })
 
-    logs.forEach((log) => {
-      if (log.address !== this.evmRelayerAddress) return
+    for (var log of logs) {
+      if (log.address !== this.evmRelayerAddress.toLowerCase()) continue
       const { id, name, recipient, yearsToRegister, value, ttl } = log.args
 
-      this.processRegistrationRequest(
-        Number(id),
+      await this.processRegistrationRequest(
+        id,
         name,
         recipient,
         yearsToRegister,
-        Number(value),
-        Number(ttl)
+        value,
+        ttl
       )
-    })
+    }
 
     return new Response('Not Implemented', { status: 501 })
   }
 
   private async processRegistrationRequest(
-    id: number,
+    id: bigint,
     name: string,
     recipient: string,
     yearsToRegister: number,
-    value: number,
-    ttl: number
-  ) {
+    value: bigint,
+    ttl: bigint
+  ): Promise<void> {
     console.log('New request:', id, name);
 
-    if (this.isTTLValid(ttl)) {
-      this.relayRequestToWasm(
-        Number(id),
+    if (this.isTTLValid(Number(ttl))) {
+      await this.relayRequestToWasm(
+        id,
         name,
         recipient,
         Number(yearsToRegister),
@@ -127,12 +146,74 @@ class AzeroIdRelayer {
   }
 
   private async relayRequestToWasm(
-    id: number,
+    id: bigint,
     name: string,
     recipient: string,
     yearsToRegister: number,
-    maxFeesInEVM: number
-  ) { }
+    maxFeesInEVM: bigint
+  ): Promise<void> {
+    const wasmRelayerContract = await this.getWasmRelayerContract()
+    const maxFeesInWASM = this.valueEVM2WASM(maxFeesInEVM)
+
+    // first dry-run to save Tx that would fail
+    const { data, raw } = await wasmRelayerContract.query.register(
+      id,
+      name,
+      recipient,
+      yearsToRegister,
+      maxFeesInWASM,
+      {
+        caller: this.wasmSigner.address
+      }
+    )
+
+    if (data.isErr) {
+      console.log('Cannot make transaction due to error:', data.err);
+      // relay failure status back to EVM
+      return this.failure(id)
+    }
+
+    await wasmRelayerContract.tx.register(
+      id,
+      name,
+      recipient,
+      yearsToRegister,
+      maxFeesInWASM,
+      {
+        gasLimit: raw.gasRequired
+      }
+    ).signAndSend(this.wasmSigner, ({ status, events }) => {
+      if (status.type === 'Finalized') {
+        const successEvent = wasmRelayerContract.events.Success.find(events)
+
+        if (successEvent === undefined) {
+          // Failure
+          console.log('Failed to register');
+          this.failure(id);
+        } else {
+          // Success
+          const priceInWASM = successEvent.data.price;
+          console.log('Registered successfully with price:', Number(priceInWASM));
+          const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM);
+          this.success(id, refundInEVM);
+        }
+      }
+    })
+  }
+
+  private async success(id: bigint, refundInEVM: bigint) { }
+
+  private async failure(id: bigint) { }
+
+  private valueEVM2WASM(valueInEVM: bigint): bigint {
+    // TODO: set value converter properly
+    return valueInEVM + BigInt(10000000000000)
+  }
+
+  private valueWASM2EVM(valueInEVM: bigint): bigint {
+    // TODO: set value converter properly
+    return BigInt(0)
+  }
 
   /// @dev ttl is expected to be in seconds
   isTTLValid(ttl: number) {

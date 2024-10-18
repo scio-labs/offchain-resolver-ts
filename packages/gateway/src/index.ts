@@ -1,3 +1,4 @@
+import { Keyring } from '@polkadot/keyring'
 import { ethers } from 'ethers'
 import { AutoRouter, AutoRouterType } from 'itty-router'
 import { privateKeyToAccount } from 'viem/accounts'
@@ -18,6 +19,8 @@ function initRouter(env: any) {
     EVM_RPC_BASE_URL,
     INFURA_API_KEY,
     EVM_RELAYER_CONTRACT,
+    WASM_RELAYER_CONTRACT,
+    WASM_PRIVATE_KEY,
     BUFFER_DURATION_IN_MIN,
   } = env
   if (
@@ -28,6 +31,8 @@ function initRouter(env: any) {
     !EVM_RPC_BASE_URL ||
     !INFURA_API_KEY ||
     !EVM_RELAYER_CONTRACT ||
+    !WASM_RELAYER_CONTRACT ||
+    !WASM_PRIVATE_KEY ||
     !BUFFER_DURATION_IN_MIN
   ) {
     throw new Error('Missing environment variables')
@@ -42,10 +47,13 @@ function initRouter(env: any) {
 
   // Initialize the Relayer
   const evmRpcUrl = `${EVM_RPC_BASE_URL}/${INFURA_API_KEY}`
+  const wasmSigner = new Keyring().createFromUri(WASM_PRIVATE_KEY)
   const relayer = new AzeroIdRelayer(
     AZERO_RPC_URL,
     evmRpcUrl,
     EVM_RELAYER_CONTRACT,
+    WASM_RELAYER_CONTRACT,
+    wasmSigner,
     BUFFER_DURATION_IN_MIN
   )
 
