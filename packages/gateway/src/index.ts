@@ -21,6 +21,7 @@ function initRouter(env: any) {
     EVM_RELAYER_CONTRACT,
     WASM_RELAYER_CONTRACT,
     WASM_PRIVATE_KEY,
+    EVM_RELAYER_PRIVATE_KEY,
     BUFFER_DURATION_IN_MIN,
   } = env
   if (
@@ -33,6 +34,7 @@ function initRouter(env: any) {
     !EVM_RELAYER_CONTRACT ||
     !WASM_RELAYER_CONTRACT ||
     !WASM_PRIVATE_KEY ||
+    !EVM_RELAYER_PRIVATE_KEY ||
     !BUFFER_DURATION_IN_MIN
   ) {
     throw new Error('Missing environment variables')
@@ -54,6 +56,7 @@ function initRouter(env: any) {
     EVM_RELAYER_CONTRACT,
     WASM_RELAYER_CONTRACT,
     wasmSigner,
+    EVM_RELAYER_PRIVATE_KEY,
     BUFFER_DURATION_IN_MIN
   )
 

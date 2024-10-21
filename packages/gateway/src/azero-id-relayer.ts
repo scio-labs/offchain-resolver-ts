@@ -4,11 +4,14 @@ import { Contract, ContractMetadata } from 'dedot/contracts'
 import {
   type Chain,
   createPublicClient,
+  createWalletClient,
   http,
   parseEventLogs,
   PublicClient,
   WaitForTransactionReceiptReturnType,
+  WalletClient
 } from 'viem'
+import { privateKeyToAccount } from 'viem/accounts'
 import { mainnet, sepolia } from 'viem/chains'
 import { WasmContractApi } from '../types/wasm'
 import { registrationProxyAbi } from '../wagmi.generated'
@@ -21,9 +24,11 @@ class AzeroIdRelayer {
   private evmRelayerAddress: `0x${string}`
   private wasmRelayerAddress: string
   private wasmSigner: KeyringPair
+  private evmSignerKey: `0x${string}`
   private bufferDuration: number
   private _azeroClient: LegacyClient | undefined
   private _evmClient: PublicClient | undefined
+  private _evmWallet: WalletClient | undefined
   private _wasmRelayerContract: Contract<WasmContractApi> | undefined
 
   constructor(
@@ -32,6 +37,7 @@ class AzeroIdRelayer {
     evmRelayerAddress: `0x${string}`,
     wasmRelayerAddress: string,
     wasmSigner: KeyringPair,
+    evmSignerKey: `0x${string}`,
     bufferDurationInMinutes: number
   ) {
     this.azeroRpcUrl = azeroRpcUrl
@@ -43,6 +49,7 @@ class AzeroIdRelayer {
     this.evmRelayerAddress = evmRelayerAddress
     this.wasmRelayerAddress = wasmRelayerAddress
     this.wasmSigner = wasmSigner
+    this.evmSignerKey = evmSignerKey
     this.bufferDuration = bufferDurationInMinutes * 60 * 1000; // converted to milliseconds
   }
 
@@ -63,6 +70,17 @@ class AzeroIdRelayer {
       this._evmClient = createPublicClient({ chain: this.evmChain, transport })
     }
     return this._evmClient
+  }
+
+  private getEvmWallet() {
+    if (!this._evmWallet)
+      this._evmWallet = createWalletClient({
+        account: privateKeyToAccount(this.evmSignerKey),
+        chain: this.evmChain,
+        transport: http(this.evmRpcUrl),
+      })
+
+    return this._evmWallet
   }
 
   private async getWasmRelayerContract() {
