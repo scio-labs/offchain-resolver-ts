@@ -20,6 +20,7 @@ import { registrationProxyAbi } from '../wagmi.generated'
 import wasmRelayerMetadata from './metadata/wasmRelayer.json'
 
 class AzeroIdRelayer {
+  private isPaused: boolean
   private azeroRpcUrl: string
   private evmRpcUrl: string
   private evmChain: Chain
@@ -42,6 +43,7 @@ class AzeroIdRelayer {
     evmSignerKey: `0x${string}`,
     bufferDurationInMinutes: number
   ) {
+    this.isPaused = false
     this.azeroRpcUrl = azeroRpcUrl
     this.evmRpcUrl = evmRpcUrl
     this.evmChain = evmRpcUrl.includes('mainnet') ? mainnet : sepolia
@@ -136,7 +138,7 @@ class AzeroIdRelayer {
       )
     }
 
-    return new Response('Not Implemented', { status: 501 })
+    return new Response('Execution status not revealed', { status: 501 })
   }
 
   private async processRegistrationRequest(
@@ -149,7 +151,9 @@ class AzeroIdRelayer {
   ): Promise<void> {
     console.log('New request:', id, name);
 
-    if (this.isTTLValid(Number(ttl))) {
+    if (this.isPaused) {
+      console.log(`Request Id(${Number(id)}) skipped; Not accepting any new requests`)
+    } else if (this.isTTLValid(Number(ttl))) {
       await this.relayRequestToWasm(
         id,
         name,
@@ -221,7 +225,49 @@ class AzeroIdRelayer {
     })
   }
 
-  private async success(id: bigint, refundInEVM: bigint) { }
+  private async success(id: bigint, refundInEVM: bigint): Promise<void> {
+    const evmClient = this.getEvmClient()
+    const evmWallet = this.getEvmWallet()
+
+    let receipt
+    try {
+      const hash = await evmWallet.writeContract({
+        address: this.evmRelayerAddress,
+        abi: registrationProxyAbi,
+        functionName: 'success',
+        args: [id, refundInEVM],
+        account: privateKeyToAccount(this.evmSignerKey),
+        chain: this.evmChain
+      })
+      receipt = await evmClient.waitForTransactionReceipt({ hash })
+    } catch (err) {
+      // ALERT: RELAYER FAILURE
+      this.isPaused = true
+      throw new Error(`(Request Id: ${id}) FAILURE: Success status could not be relayed back\nError log:`, err ?? '');
+    }
+
+    const logs = parseEventLogs({
+      logs: receipt.logs,
+      abi: registrationProxyAbi,
+      eventName: 'ResultInfo',
+      args: {
+        id,
+        success: true
+      }
+    })
+
+    const relaySuccess = logs.some((log) => {
+      return log.address === this.evmRelayerAddress.toLowerCase()
+    })
+
+    if (relaySuccess) {
+      console.log(`(Request Id: ${id}) Success status relayed back successfully`);
+    } else {
+      // ALERT: RELAYER FAILURE
+      this.isPaused = true
+      throw new Error(`(Request Id: ${id}) FAILURE: Success status could not be relayed back`);
+    }
+  }
 
   private async failure(id: bigint): Promise<void> {
     const evmClient = this.getEvmClient()
