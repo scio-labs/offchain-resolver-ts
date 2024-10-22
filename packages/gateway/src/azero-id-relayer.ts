@@ -2,7 +2,9 @@ import { KeyringPair } from '@polkadot/keyring/types'
 import { LegacyClient, WsProvider } from 'dedot'
 import { Contract, ContractMetadata } from 'dedot/contracts'
 import {
+  BaseError,
   type Chain,
+  ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
   http,
@@ -221,7 +223,35 @@ class AzeroIdRelayer {
 
   private async success(id: bigint, refundInEVM: bigint) { }
 
-  private async failure(id: bigint) { }
+  private async failure(id: bigint): Promise<void> {
+    const evmClient = this.getEvmClient()
+    const evmWallet = this.getEvmWallet()
+
+    const request = await this._mockFailure(id)
+    if (request === undefined) return
+    const hash = await evmWallet.writeContract(request)
+    const receipt = await evmClient.waitForTransactionReceipt({ hash })
+
+    const logs = parseEventLogs({
+      logs: receipt.logs,
+      abi: registrationProxyAbi,
+      eventName: 'ResultInfo',
+      args: {
+        id,
+        success: false
+      }
+    })
+
+    const relaySuccess = logs.some((log) => {
+      return log.address === this.evmRelayerAddress.toLowerCase()
+    })
+
+    if (relaySuccess) {
+      console.log(`(Request Id: ${id}) Failure status relayed back successfully`);
+    } else {
+      console.log(`(Request Id: ${id}) Failure status was NOT relayed back`);
+    }
+  }
 
   private valueEVM2WASM(valueInEVM: bigint): bigint {
     // TODO: set value converter properly
@@ -238,6 +268,30 @@ class AzeroIdRelayer {
     ttl = ttl * 1000; // convert seconds to milliseconds
     const currentTimestamp = Date.now();
     return currentTimestamp + this.bufferDuration <= ttl;
+  }
+
+  private async _mockFailure(id: bigint) {
+    const evmClient = this.getEvmClient()
+
+    try {
+      const { request } = await evmClient.simulateContract({
+        address: this.evmRelayerAddress,
+        abi: registrationProxyAbi,
+        functionName: 'failure',
+        args: [id],
+        account: privateKeyToAccount(this.evmSignerKey)
+      })
+      return request
+    } catch (err) {
+      if (err instanceof BaseError) {
+        const revertError = err.walk(err => err instanceof ContractFunctionRevertedError)
+        if (revertError instanceof ContractFunctionRevertedError) {
+          console.log(
+            `Failure state of RequestId(${id}) couldn't be relayed back with reason(${revertError.reason})`
+          )
+        }
+      }
+    }
   }
 }
 
