@@ -194,6 +194,7 @@ class AzeroIdRelayer {
     if (data.isErr) {
       console.log('Cannot make transaction due to error:', data.err);
       // relay failure status back to EVM
+      if (data.err.type === 'DuplicateId') return
       return this.failure(id)
     }
 
