@@ -1,14 +1,16 @@
 import { Keyring } from '@polkadot/keyring'
-import { ethers } from 'ethers'
-import { AutoRouter, AutoRouterType } from 'itty-router'
+import { AutoRouter, cors, error } from 'itty-router'
 import { privateKeyToAccount } from 'viem/accounts'
 import { AzeroIdRelayer } from './azero-id-relayer'
 import { AzeroIdResolver } from './azero-id-resolver'
 import { makeServer } from './server'
+import cachify from './utils/cahify'
+import Logger from './utils/logger'
 
-let router: AutoRouterType | undefined
+const log = Logger.getInstance()
+
 function initRouter(env: any) {
-  console.log('Initializing…')
+  log.debug('Initializing Router…')
 
   // Destructure environment variables
   const {
@@ -40,12 +42,9 @@ function initRouter(env: any) {
     throw new Error('Missing environment variables')
   }
 
-  // Initialize the Database-like Resolver
-  const db = new AzeroIdResolver(parseInt(OG_TTL), AZERO_RPC_URL, SUPPORTED_TLDS)
-
-  // Initialize the CCIP-Read Handler
-  const signer = new ethers.utils.SigningKey(OG_PRIVATE_KEY)
-  const gateway = makeServer(signer, db)
+  // Initialize the Resolver & Gateway
+  const resolver = new AzeroIdResolver(OG_TTL, AZERO_RPC_URL, SUPPORTED_TLDS)
+  const gateway = makeServer(OG_PRIVATE_KEY, resolver)
 
   // Initialize the Relayer
   const evmRpcUrl = `${EVM_RPC_BASE_URL}/${INFURA_API_KEY}`
@@ -57,12 +56,16 @@ function initRouter(env: any) {
     WASM_RELAYER_CONTRACT,
     wasmSigner,
     EVM_RELAYER_PRIVATE_KEY,
-    BUFFER_DURATION_IN_MIN
+    BUFFER_DURATION_IN_MIN,
   )
 
   // Setup itty-router (used by `@ensdomains/ccip-read-cf-worker`)
-  const router = AutoRouter()
-    .get('/', () => new Response('AZERO.ID Gateway & Relayer are running… 🌉', { status: 200 }))
+  const { preflight, corsify } = cors()
+  const router = AutoRouter({
+    before: [preflight],
+    finally: [corsify, cachify(OG_TTL)],
+  })
+    .get('/', () => new Response('AZERO.ID Gateway is running… 🌉', { status: 200 }))
     // Gateway
     .get(`/:sender/:callData.json`, gateway.handleRequest.bind(gateway))
     .post('/', gateway.handleRequest.bind(gateway))
@@ -70,19 +73,15 @@ function initRouter(env: any) {
     .post(`/relay`, relayer.handleRequest.bind(relayer))
 
   const { address } = privateKeyToAccount(OG_PRIVATE_KEY)
-  console.log(`Initialized Gateway & Relayer with Signing Address ${address}`)
+  log.info(`Initialized Gateway & Relayer with signer '${address}'`)
 
   return router
 }
 
 export default {
   fetch(request: Request, env: any) {
-    try {
-      router = router || initRouter(env)
-      return router.fetch(request)
-    } catch (e) {
-      console.error(e)
-      return new Response('Internal server error', { status: 500 })
-    }
+    log.setLogLevel(env.LOGLEVEL || 1)
+    const router = initRouter(env)
+    return router.fetch(request).catch(error)
   },
 }

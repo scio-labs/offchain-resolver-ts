@@ -37,29 +37,32 @@ const transport = process.env.INFURA_API_KEY
 const viemClient = createPublicClient({ chain: evmChain, transport })
 
 const evmChainName = isMainnet ? 'Ethereum Mainnet' : 'Ethereum Sepolia'
-const ensDomain = isMainnet ? `${domain}-id.eth` : `${domain}-id.eth`
+const ensDomain = isMainnet ? `${domain}.id` : `${domain}.id`
+// const ensDomain = isMainnet ? `${domain}-id.eth` : `${domain}-id.eth`
 
 const resolver = await viemClient.getEnsResolver({
   name: normalize(ensDomain),
 })
 spinner.info(`[${evmChainName}] Found Resolver: ${resolver}`).start()
 
-const gatewayUrl = isMainnet
-  ? `https://azero-id-gateway.nameverse.io`
-  : `https://tzero-id-gateway.nameverse.io`
+const gatewayUrl = isMainnet ? `https://gateway.azero.id` : `https://gateway.tzero.id`
 spinner.info(`[${evmChainName}] Gateway URL: ${gatewayUrl}`)
 
 spinner.start(`Fetching ENS Address on EVM via Gateway (${gatewayUrl})…`)
+
+const startTime = performance.now()
 const evmAddress = await viemClient.getEnsAddress({
   name: normalize(ensDomain),
   coinType: 643,
-  // universalResolverAddress: resolver,
+  universalResolverAddress: resolver,
 })
+const endTime = performance.now()
+const duration = endTime - startTime
 
 const evmAddressSs58 = evmAddress ? new AccountId32(evmAddress).address() : null
 if (evmAddress && evmAddressSs58) {
   spinner.success(
-    `[${evmChainName}] Resolved address of ${ensDomain}: ${evmAddressSs58} (${evmAddress})`,
+    `[${evmChainName}] Resolved address of ${ensDomain}: ${evmAddressSs58} (${evmAddress}) in ${duration.toFixed(0)}ms`,
   )
 } else {
   spinner.error(`[${evmChainName}] Couldn't resolve address of ${ensDomain}`)

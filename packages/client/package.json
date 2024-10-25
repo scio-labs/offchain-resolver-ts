@@ -1,6 +1,6 @@
 {
-  "name": "@scio-labs/azero-offchain-resolver-client",
-  "version": "0.0.1",
+  "name": "@scio-labs/azero-offchain-client",
+  "version": "0.2.0",
   "repository": "git@github.com:scio-labs/offchain-resolver-ts.git",
   "author": "Scio Labs <hello@scio.xyz> (https://scio.xyz)",
   "license": "MIT",
@@ -16,7 +16,7 @@
     "@types/bun": "latest",
     "@wagmi/cli": "^2.1.16",
     "dedot": "^0.6.0",
-    "viem": "^2.21.22",
-    "yocto-spinner": "^0.1.0"
+    "viem": "^2.21.34",
+    "yocto-spinner": "^0.1.1"
   }
 }

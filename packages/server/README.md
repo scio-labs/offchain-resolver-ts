@@ -1,8 +1,10 @@
-# ENS Offchain Gateway for Aleph Zero – Gateway Server (Worker)
+# ENS Offchain Gateway & Registration Relayer for AZERO.ID
 
 > **See [README.md](../../README.md) for more information.**
 
 ## Getting Started
+
+@TODO Nimish: Anything to add here?
 
 ### Development
 

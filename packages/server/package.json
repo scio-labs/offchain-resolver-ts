@@ -1,6 +1,6 @@
 {
-  "name": "@scio-labs/azero-offchain-resolver-gateway",
-  "version": "0.0.1",
+  "name": "@scio-labs/azero-offchain-server",
+  "version": "0.2.0",
   "repository": "git@github.com:scio-labs/offchain-resolver-ts.git",
   "author": "Scio Labs <hello@scio.xyz> (https://scio.xyz)",
   "license": "MIT",
@@ -24,21 +24,19 @@
     "clean": "rm -fr node_modules dist"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241004.0",
-    "wrangler": "^3.80.4",
+    "@cloudflare/workers-types": "^4.20241022.0",
+    "wrangler": "^3.83.0",
     "@wagmi/cli": "^2.1.16"
   },
   "dependencies": {
     "@chainlink/ethers-ccip-read-provider": "^0.2.3",
     "@ensdomains/address-encoder": "^1.1.2",
-    "@polkadot/api": "^14.0.1",
-    "@polkadot/api-contract": "^14.0.1",
-    "dedot": "^0.6.0",
-    "viem": "^2.21.22",
     "@ensdomains/ccip-read-cf-worker": "^0.0.3",
     "@ensdomains/ens-contracts": "^1.2.2",
     "@ensdomains/offchain-resolver-contracts": "^0.2.1",
+    "dedot": "^0.6.0",
     "ethers": "^5.7.2",
-    "itty-router": "^5.0.18"
+    "itty-router": "^5.0.18",
+    "viem": "^2.21.34"
   }
 }

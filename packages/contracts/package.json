@@ -1,11 +1,11 @@
 {
-  "name": "@scio-labs/azero-offchain-resolver-contracts",
-  "version": "0.0.1",
+  "name": "@scio-labs/azero-offchain-contracts",
+  "version": "0.2.0",
   "repository": "git@github.com:scio-labs/offchain-resolver-ts.git",
   "author": "Scio Labs <hello@scio.xyz> (https://scio.xyz)",
   "license": "MIT",
   "files": [
-    "contracts/*.sol",
+    "contracts/**/*.sol",
     "artifacts/contracts/**/*.json"
   ],
   "scripts": {
