@@ -27,6 +27,7 @@ export type WasmRegistrationProxyError =
   | { type: 'TooExpensive' }
   | { type: 'DuplicateId' }
   | { type: 'RegisterFailed'; value: number }
+  | { type: 'RegisterFailedWithRevert'; value: number }
   | { type: 'PriceFetchFailed'; value: number }
 
 export type WasmRegistrationProxyInnerResult =

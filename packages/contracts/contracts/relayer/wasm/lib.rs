@@ -7,6 +7,7 @@
 mod registration_proxy {
     use ink::env::call::{build_call, ExecutionInput, Selector};
     use ink::prelude::string::String;
+    use ink::prelude::vec::Vec;
     use ink::storage::Mapping;
 
     #[ink(event)]
@@ -47,6 +48,8 @@ mod registration_proxy {
         DuplicateId,
         /// Failed to register
         RegisterFailed(u8),
+        /// Failed to register with Id not marked
+        RegisterFailedWithRevert(u8),
         /// Unable to retrieve the price
         PriceFetchFailed(u8),
     }
@@ -87,6 +90,7 @@ mod registration_proxy {
             name: String,
             recipient: AccountId,
             years_to_register: u8,
+            records: Vec<(String, String)>,
             max_fees: Balance,
         ) -> Result<InnerResult, Error> {
             self.ensure_controller()?;
@@ -102,26 +106,20 @@ mod registration_proxy {
                 return Ok(InnerResult::Fail(Error::InsufficientBalance));
             }
 
-            const REGISTER_SELECTOR: [u8; 4] = ink::selector_bytes!("register_on_behalf_of");
-            let result = build_call::<Environment>()
-                .call(self.registry_addr)
-                .call_v1()
-                .exec_input(
-                    ExecutionInput::new(Selector::new(REGISTER_SELECTOR))
-                        .push_arg(name)
-                        .push_arg(recipient)
-                        .push_arg(years_to_register)
-                        .push_arg::<Option<String>>(None)
-                        .push_arg::<Option<String>>(None),
-                )
-                .returns::<core::result::Result<(), u8>>()
-                .transferred_value(price)
-                .params()
-                .invoke();
-
+            // register with custody
+            let result = self.do_register(&name, years_to_register, price);
             if let Err(e) = result {
                 return Ok(InnerResult::Fail(Error::RegisterFailed(e)));
             }
+
+            // set metadata and then transfer name ownership
+            // TODO: evaluate if this action can ever fail (leaving behind unmarked id)
+            // TODO: if yes, then explore attack vector(s) (result: free domain)
+            self.do_set_metadata(&name, records)
+                .map_err(Error::RegisterFailedWithRevert)?;
+            self.do_transfer_name(&name, &recipient)
+                .map_err(Error::RegisterFailedWithRevert)?;
+
             self.env().emit_event(Success { id, price });
 
             Ok(InnerResult::Pass(price))
@@ -161,6 +159,76 @@ mod registration_proxy {
                 )
             });
             ink::env::debug_println!("Switched code hash to {:?}.", code_hash);
+        }
+
+        fn do_register(&self, name: &str, years_to_register: u8, price: u128) -> Result<(), u8> {
+            const REGISTER_SELECTOR: [u8; 4] = ink::selector_bytes!("register_v2");
+
+            let referrer: Option<String> = None;
+            let bonus_name: Option<String> = None;
+            let set_as_primary_name = false;
+
+            build_call::<Environment>()
+                .call(self.registry_addr)
+                .call_v1()
+                .exec_input(
+                    ExecutionInput::new(Selector::new(REGISTER_SELECTOR))
+                        .push_arg(name)
+                        .push_arg(years_to_register)
+                        .push_arg(referrer)
+                        .push_arg(bonus_name)
+                        .push_arg(set_as_primary_name),
+                )
+                .returns::<core::result::Result<(), u8>>()
+                .transferred_value(price)
+                .params()
+                .invoke()
+        }
+
+        fn do_set_metadata(&self, name: &str, records: Vec<(String, String)>) -> Result<(), u8> {
+            const UPDATE_RECORDS_SELECTOR: [u8; 4] = ink::selector_bytes!("update_records");
+
+            let records: Vec<(String, Option<String>)> =
+                records.into_iter().map(|(k, v)| (k, Some(v))).collect();
+            let remove_rest = true;
+
+            build_call::<Environment>()
+                .call(self.registry_addr)
+                .call_v1()
+                .exec_input(
+                    ExecutionInput::new(Selector::new(UPDATE_RECORDS_SELECTOR))
+                        .push_arg(name)
+                        .push_arg(records)
+                        .push_arg(remove_rest),
+                )
+                .returns::<core::result::Result<(), u8>>()
+                .params()
+                .invoke()
+        }
+
+        fn do_transfer_name(&self, name: &str, to: &AccountId) -> Result<(), u8> {
+            const TRANSFER_SELECTOR: [u8; 4] = ink::selector_bytes!("transfer");
+
+            let keep_records = true;
+            let keep_controller = false;
+            let keep_resolving = false;
+            let data: Vec<u8> = Vec::new();
+
+            build_call::<Environment>()
+                .call(self.registry_addr)
+                .call_v1()
+                .exec_input(
+                    ExecutionInput::new(Selector::new(TRANSFER_SELECTOR))
+                        .push_arg(to)
+                        .push_arg(name)
+                        .push_arg(keep_records)
+                        .push_arg(keep_controller)
+                        .push_arg(keep_resolving)
+                        .push_arg(data),
+                )
+                .returns::<core::result::Result<(), u8>>()
+                .params()
+                .invoke()
         }
 
         fn get_name_price(

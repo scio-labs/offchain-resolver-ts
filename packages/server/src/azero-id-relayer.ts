@@ -126,13 +126,14 @@ class AzeroIdRelayer {
 
     for (var log of logs) {
       if (log.address !== this.evmRelayerAddress.toLowerCase()) continue
-      const { id, name, recipient, yearsToRegister, value, ttl } = log.args
+      const { id, name, recipient, yearsToRegister, metadata, value, ttl } = log.args
 
       await this.processRegistrationRequest(
         id,
         name,
         recipient,
         yearsToRegister,
+        metadata as unknown as Array<[string, string]>,
         value,
         ttl
       )
@@ -146,6 +147,7 @@ class AzeroIdRelayer {
     name: string,
     recipient: string,
     yearsToRegister: number,
+    metadata: Array<[string, string]>,
     value: bigint,
     ttl: bigint
   ): Promise<void> {
@@ -159,6 +161,7 @@ class AzeroIdRelayer {
         name,
         recipient,
         Number(yearsToRegister),
+        metadata,
         value
       );
     } else {
@@ -174,6 +177,7 @@ class AzeroIdRelayer {
     name: string,
     recipient: string,
     yearsToRegister: number,
+    metadata: Array<[string, string]>,
     maxFeesInEVM: bigint
   ): Promise<void> {
     const wasmRelayerContract = await this.getWasmRelayerContract()
@@ -185,6 +189,7 @@ class AzeroIdRelayer {
       name,
       recipient,
       yearsToRegister,
+      metadata,
       maxFeesInWASM,
       {
         caller: this.wasmSigner.address
@@ -203,6 +208,7 @@ class AzeroIdRelayer {
       name,
       recipient,
       yearsToRegister,
+      metadata,
       maxFeesInWASM,
       {
         gasLimit: raw.gasRequired

@@ -13,7 +13,13 @@ contract RegistrationProxy is Ownable, Controllable {
     }
 
     event InitiateRequest(
-        uint256 indexed id, string name, string recipient, uint8 yearsToRegister, uint256 value, uint256 ttl
+        uint256 indexed id,
+        string name,
+        string recipient,
+        uint8 yearsToRegister,
+        string[2][] metadata,
+        uint256 value,
+        uint256 ttl
     );
 
     event ResultInfo(uint256 indexed id, bool success, uint256 refundAmt);
@@ -39,14 +45,19 @@ contract RegistrationProxy is Ownable, Controllable {
         holdPeriod = _holdPeriod;
     }
 
-    function register(string calldata name, string calldata recipient, uint8 yearsToRegister) external payable {
+    function register(
+        string calldata name,
+        string calldata recipient,
+        uint8 yearsToRegister,
+        string[2][] calldata metadata
+    ) external payable {
         uint256 ttl = block.timestamp + holdPeriod;
         uint256 _id = id++;
 
         lockedFunds += msg.value;
         idToRecord[_id] = Record(msg.sender, msg.value, ttl, Status.PENDING);
 
-        emit InitiateRequest(_id, name, recipient, yearsToRegister, msg.value, ttl);
+        emit InitiateRequest(_id, name, recipient, yearsToRegister, metadata, msg.value, ttl);
     }
 
     function success(uint256 _id, uint256 refundAmt) external onlyController {

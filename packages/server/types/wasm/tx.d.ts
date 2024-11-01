@@ -45,6 +45,7 @@ export interface ContractTx<ChainApi extends GenericSubstrateApi>
    * @param {string} name
    * @param {AccountId32Like} recipient
    * @param {number} yearsToRegister
+   * @param {Array<[string, string]>} records
    * @param {bigint} maxFees
    * @param {ContractTxOptions} options
    *
@@ -57,6 +58,7 @@ export interface ContractTx<ChainApi extends GenericSubstrateApi>
       name: string,
       recipient: AccountId32Like,
       yearsToRegister: number,
+      records: Array<[string, string]>,
       maxFees: bigint,
       options: ContractTxOptions,
     ) => ContractSubmittableExtrinsic<ChainApi>
