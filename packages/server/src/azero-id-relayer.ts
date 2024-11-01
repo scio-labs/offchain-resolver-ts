@@ -300,14 +300,14 @@ class AzeroIdRelayer {
     }
   }
 
+  // AZERO decimals on EVM: 18
+  // AZERO decimals on WASM: 12
   private valueEVM2WASM(valueInEVM: bigint): bigint {
-    // TODO: set value converter properly
-    return valueInEVM + BigInt(10000000000000)
+    return valueInEVM / BigInt(1_000_000)
   }
 
-  private valueWASM2EVM(valueInEVM: bigint): bigint {
-    // TODO: set value converter properly
-    return BigInt(0)
+  private valueWASM2EVM(valueInWASM: bigint): bigint {
+    return valueInWASM * BigInt(1_000_000)
   }
 
   /// @dev ttl is expected to be in seconds
