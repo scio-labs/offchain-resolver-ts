@@ -57,7 +57,7 @@ contract RegistrationProxy is Ownable, Controllable {
         record.status = Status.SUCCESS;
         idToRecord[_id] = record;
         payable(record.initiator).transfer(refundAmt);
-        lockedFunds -= refundAmt;
+        lockedFunds -= record.value;
 
         emit ResultInfo(_id, true, refundAmt);
     }
