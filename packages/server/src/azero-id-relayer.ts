@@ -11,7 +11,8 @@ import {
   parseEventLogs,
   PublicClient,
   WaitForTransactionReceiptReturnType,
-  WalletClient
+  WalletClient,
+  zeroAddress
 } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { mainnet, sepolia } from 'viem/chains'
@@ -126,7 +127,7 @@ class AzeroIdRelayer {
 
     for (var log of logs) {
       if (log.address !== this.evmRelayerAddress.toLowerCase()) continue
-      const { id, name, recipient, yearsToRegister, metadata, value, ttl } = log.args
+      const { id, name, recipient, yearsToRegister, metadata, paymentToken, value, ttl } = log.args
 
       await this.processRegistrationRequest(
         id,
@@ -134,6 +135,7 @@ class AzeroIdRelayer {
         recipient,
         yearsToRegister,
         metadata as unknown as Array<[string, string]>,
+        paymentToken,
         value,
         ttl
       )
@@ -148,6 +150,7 @@ class AzeroIdRelayer {
     recipient: string,
     yearsToRegister: number,
     metadata: Array<[string, string]>,
+    paymentToken: `0x${string}`,
     value: bigint,
     ttl: bigint
   ): Promise<void> {
@@ -162,6 +165,7 @@ class AzeroIdRelayer {
         recipient,
         Number(yearsToRegister),
         metadata,
+        paymentToken,
         value
       );
     } else {
@@ -178,10 +182,11 @@ class AzeroIdRelayer {
     recipient: string,
     yearsToRegister: number,
     metadata: Array<[string, string]>,
+    paymentToken: `0x${string}`,
     maxFeesInEVM: bigint
   ): Promise<void> {
     const wasmRelayerContract = await this.getWasmRelayerContract()
-    const maxFeesInWASM = this.valueEVM2WASM(maxFeesInEVM)
+    const maxFeesInWASM = this.valueEVM2WASM(maxFeesInEVM, paymentToken)
 
     // first dry-run to save Tx that would fail
     const { data, raw } = await wasmRelayerContract.query.register(
@@ -225,7 +230,7 @@ class AzeroIdRelayer {
           // Success
           const priceInWASM = successEvent.data.price;
           console.log('Registered successfully with price:', Number(priceInWASM));
-          const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM);
+          const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM, paymentToken);
           this.success(id, refundInEVM);
         }
       }
@@ -308,11 +313,13 @@ class AzeroIdRelayer {
 
   // AZERO decimals on EVM: 18
   // AZERO decimals on WASM: 12
-  private valueEVM2WASM(valueInEVM: bigint): bigint {
+  private valueEVM2WASM(valueInEVM: bigint, fromPaymentToken: `0x${string}`): bigint {
+    if (fromPaymentToken !== zeroAddress) throw new Error(`Token(${fromPaymentToken}) not supported`)
     return valueInEVM / BigInt(1_000_000)
   }
 
-  private valueWASM2EVM(valueInWASM: bigint): bigint {
+  private valueWASM2EVM(valueInWASM: bigint, toPaymentToken: `0x${string}`): bigint {
+    if (toPaymentToken !== zeroAddress) throw new Error(`Token(${toPaymentToken}) not supported`)
     return valueInWASM * BigInt(1_000_000)
   }
 
