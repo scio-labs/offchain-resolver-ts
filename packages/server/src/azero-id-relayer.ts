@@ -102,7 +102,7 @@ class AzeroIdRelayer {
   async handleRequest(request: Request): Promise<Response> {
     const evmClient = this.getEvmClient()
 
-    const { txHash } = await request.json()
+    const { txHash, reqId } = await request.json()
     if (!txHash) return new Response('Bad Request', { status: 400 })
 
     // Wait for the transaction receipt
@@ -123,23 +123,24 @@ class AzeroIdRelayer {
       logs: receipt.logs,
       abi: registrationProxyAbi,
       eventName: 'InitiateRequest'
-    })
+    }).filter(log => log.address === this.evmRelayerAddress.toLowerCase() &&
+      (reqId === undefined) ? true : log.args.id == reqId)
 
-    for (var log of logs) {
-      if (log.address !== this.evmRelayerAddress.toLowerCase()) continue
-      const { id, name, recipient, yearsToRegister, metadata, paymentToken, value, ttl } = log.args
+    if (logs.length === 0) return new Response('No event found', { status: 404 })
+    if (logs.length !== 1) return new Response(`Multiple events found; specify 'reqId'`, { status: 400 })
 
-      await this.processRegistrationRequest(
-        id,
-        name,
-        recipient,
-        yearsToRegister,
-        metadata as unknown as Array<[string, string]>,
-        paymentToken,
-        value,
-        ttl
-      )
-    }
+    const { id, name, recipient, yearsToRegister, metadata, paymentToken, value, ttl } = logs[0].args
+
+    await this.processRegistrationRequest(
+      id,
+      name,
+      recipient,
+      yearsToRegister,
+      metadata as unknown as Array<[string, string]>,
+      paymentToken,
+      value,
+      ttl
+    )
 
     return new Response('Execution status not revealed', { status: 501 })
   }
