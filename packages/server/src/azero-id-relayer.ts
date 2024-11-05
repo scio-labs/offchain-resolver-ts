@@ -131,7 +131,7 @@ class AzeroIdRelayer {
 
     const { id, name, recipient, yearsToRegister, metadata, paymentToken, value, ttl } = logs[0].args
 
-    await this.processRegistrationRequest(
+    return this.processRegistrationRequest(
       id,
       name,
       recipient,
@@ -141,8 +141,6 @@ class AzeroIdRelayer {
       value,
       ttl
     )
-
-    return new Response('Execution status not revealed', { status: 501 })
   }
 
   private async processRegistrationRequest(
@@ -154,13 +152,14 @@ class AzeroIdRelayer {
     paymentToken: `0x${string}`,
     value: bigint,
     ttl: bigint
-  ): Promise<void> {
+  ): Promise<Response> {
     console.log('New request:', id, name);
 
     if (this.isPaused) {
       console.log(`Request Id(${Number(id)}) skipped; Not accepting any new requests`)
+      return new Response('Relayer is paused, Request skipped', { status: 503 })
     } else if (this.isTTLValid(Number(ttl))) {
-      await this.relayRequestToWasm(
+      return this.relayRequestToWasm(
         id,
         name,
         recipient,
@@ -174,6 +173,7 @@ class AzeroIdRelayer {
       console.log(
         `Request ${Number(id)} skipped as its expiry-time falls short`
       );
+      return new Response('TTL expired', { status: 500 })
     }
   }
 
@@ -185,7 +185,7 @@ class AzeroIdRelayer {
     metadata: Array<[string, string]>,
     paymentToken: `0x${string}`,
     maxFeesInEVM: bigint
-  ): Promise<void> {
+  ): Promise<Response> {
     const wasmRelayerContract = await this.getWasmRelayerContract()
     const maxFeesInWASM = this.valueEVM2WASM(maxFeesInEVM, paymentToken)
 
@@ -205,9 +205,11 @@ class AzeroIdRelayer {
     if (data.isErr) {
       console.log('Cannot make transaction due to error:', data.err);
       // relay failure status back to EVM
-      if (data.err.type === 'DuplicateId') return
+      if (data.err.type === 'DuplicateId') return new Response('Duplicate request', { status: 500 })
       return this.failure(id)
     }
+
+    let response: Promise<Response> | undefined
 
     await wasmRelayerContract.tx.register(
       id,
@@ -226,19 +228,38 @@ class AzeroIdRelayer {
         if (successEvent === undefined) {
           // Failure
           console.log('Failed to register');
-          this.failure(id);
+          response = this.failure(id);
         } else {
           // Success
           const priceInWASM = successEvent.data.price;
           console.log('Registered successfully with price:', Number(priceInWASM));
-          const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM, paymentToken);
-          this.success(id, refundInEVM);
+          try {
+            const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM, paymentToken);
+            response = this.success(id, refundInEVM);
+          } catch (error: any) {
+            const errMsg = `ALERT: Success status could not be relayed back\nError log: ${error.message}`
+            console.log(`(Request Id: ${id})`, errMsg)
+            response = (async () => new Response(errMsg, { status: 500 }))()
+          }
         }
       }
     })
+
+    const waitForResponse = (): Promise<Response> => {
+      return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          if (response !== undefined) {
+            clearInterval(interval)
+            response.then(resolve).catch(reject)
+          }
+        }, 1000)
+      })
+    }
+
+    return waitForResponse()
   }
 
-  private async success(id: bigint, refundInEVM: bigint): Promise<void> {
+  private async success(id: bigint, refundInEVM: bigint): Promise<Response> {
     const evmClient = this.getEvmClient()
     const evmWallet = this.getEvmWallet()
 
@@ -256,7 +277,9 @@ class AzeroIdRelayer {
     } catch (err) {
       // ALERT: RELAYER FAILURE
       this.isPaused = true
-      throw new Error(`(Request Id: ${id}) FAILURE: Success status could not be relayed back\nError log:`, err ?? '');
+      const errMsg = `ALERT: Success status could not be relayed back\nError log: ${err ?? ''}`
+      console.log(`(Request Id: ${id})`, errMsg)
+      return new Response(errMsg, { status: 500 })
     }
 
     const logs = parseEventLogs({
@@ -275,19 +298,22 @@ class AzeroIdRelayer {
 
     if (relaySuccess) {
       console.log(`(Request Id: ${id}) Success status relayed back successfully`);
+      return new Response('Success', { status: 200 })
     } else {
       // ALERT: RELAYER FAILURE
       this.isPaused = true
-      throw new Error(`(Request Id: ${id}) FAILURE: Success status could not be relayed back`);
+      const errMsg = `ALERT: success status could not be relayed back`
+      console.log(`(Request Id: ${id})`, errMsg)
+      return new Response(errMsg, { status: 500 })
     }
   }
 
-  private async failure(id: bigint): Promise<void> {
+  private async failure(id: bigint): Promise<Response> {
     const evmClient = this.getEvmClient()
     const evmWallet = this.getEvmWallet()
 
     const request = await this._mockFailure(id)
-    if (request === undefined) return
+    if (request === undefined) return new Response(`Failure state couldn't be relayed back`, { status: 501 })
     const hash = await evmWallet.writeContract(request)
     const receipt = await evmClient.waitForTransactionReceipt({ hash })
 
@@ -307,8 +333,10 @@ class AzeroIdRelayer {
 
     if (relaySuccess) {
       console.log(`(Request Id: ${id}) Failure status relayed back successfully`);
+      return new Response('Failure status relayed back successfully', { status: 500 })
     } else {
       console.log(`(Request Id: ${id}) Failure status was NOT relayed back`);
+      return new Response('Failure status was NOT relayed back', { status: 500 })
     }
   }
 
