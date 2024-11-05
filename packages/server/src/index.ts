@@ -73,7 +73,10 @@ function initRouter(env: any) {
     .post(`/relay`, relayer.handleRequest.bind(relayer))
 
   const { address } = privateKeyToAccount(OG_PRIVATE_KEY)
+  const evmRelayerSigner = privateKeyToAccount(EVM_RELAYER_PRIVATE_KEY)
   log.info(`Initialized Gateway & Relayer with signer '${address}'`)
+  log.info(`Initialized EVM relayer with Signing Address '${evmRelayerSigner.address}'`)
+  log.info(`Initialized Substrate relayer with Signing Address '${wasmSigner.address}'`)
 
   return router
 }

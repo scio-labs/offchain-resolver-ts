@@ -19,6 +19,9 @@ import { mainnet, sepolia } from 'viem/chains'
 import { WasmContractApi } from '../types/wasm'
 import { registrationProxyAbi } from '../wagmi.generated'
 import wasmRelayerMetadata from './metadata/wasmRelayer.json'
+import Logger from './utils/logger'
+
+const log = Logger.getInstance();
 
 class AzeroIdRelayer {
   private isPaused: boolean
@@ -114,7 +117,7 @@ class AzeroIdRelayer {
         retryDelay: 1000,
       })
     } catch (error) {
-      console.error('Error waiting for transaction receipt:', error)
+      log.error('Error waiting for transaction receipt:', error)
       return new Response('Transaction not found', { status: 404 })
     }
 
@@ -153,10 +156,10 @@ class AzeroIdRelayer {
     value: bigint,
     ttl: bigint
   ): Promise<Response> {
-    console.log('New request:', id, name);
+    log.info('New request:', id, name);
 
     if (this.isPaused) {
-      console.log(`Request Id(${Number(id)}) skipped; Not accepting any new requests`)
+      log.info(`(Request Id: ${id}) skipped; Not accepting any new requests`)
       return new Response('Relayer is paused, Request skipped', { status: 503 })
     } else if (this.isTTLValid(Number(ttl))) {
       return this.relayRequestToWasm(
@@ -170,8 +173,8 @@ class AzeroIdRelayer {
       );
     } else {
       // Ignore the request
-      console.log(
-        `Request ${Number(id)} skipped as its expiry-time falls short`
+      log.info(
+        `(Request Id: ${id}) skipped as its expiry-time falls short`
       );
       return new Response('TTL expired', { status: 500 })
     }
@@ -203,7 +206,7 @@ class AzeroIdRelayer {
     )
 
     if (data.isErr) {
-      console.log('Cannot make transaction due to error:', data.err);
+      log.error(`(Request Id: ${id}) cannot make transaction due to error:`, data.err);
       // relay failure status back to EVM
       if (data.err.type === 'DuplicateId') return new Response('Duplicate request', { status: 500 })
       return this.failure(id)
@@ -227,18 +230,18 @@ class AzeroIdRelayer {
 
         if (successEvent === undefined) {
           // Failure
-          console.log('Failed to register');
+          log.info(`(Request Id: ${id}) Failed to register`);
           response = this.failure(id);
         } else {
           // Success
           const priceInWASM = successEvent.data.price;
-          console.log('Registered successfully with price:', Number(priceInWASM));
+          log.info(`(Request Id: ${id}) Registered successfully with price ${priceInWASM} (in Wasm)`);
           try {
             const refundInEVM = maxFeesInEVM - this.valueWASM2EVM(priceInWASM, paymentToken);
             response = this.success(id, refundInEVM);
           } catch (error: any) {
             const errMsg = `ALERT: Success status could not be relayed back\nError log: ${error.message}`
-            console.log(`(Request Id: ${id})`, errMsg)
+            log.error(`(Request Id: ${id})`, errMsg)
             response = (async () => new Response(errMsg, { status: 500 }))()
           }
         }
@@ -278,7 +281,7 @@ class AzeroIdRelayer {
       // ALERT: RELAYER FAILURE
       this.isPaused = true
       const errMsg = `ALERT: Success status could not be relayed back\nError log: ${err ?? ''}`
-      console.log(`(Request Id: ${id})`, errMsg)
+      log.error(`(Request Id: ${id})`, errMsg)
       return new Response(errMsg, { status: 500 })
     }
 
@@ -297,13 +300,13 @@ class AzeroIdRelayer {
     })
 
     if (relaySuccess) {
-      console.log(`(Request Id: ${id}) Success status relayed back successfully`);
+      log.info(`(Request Id: ${id}) Success status relayed back successfully`);
       return new Response('Success', { status: 200 })
     } else {
       // ALERT: RELAYER FAILURE
       this.isPaused = true
       const errMsg = `ALERT: success status could not be relayed back`
-      console.log(`(Request Id: ${id})`, errMsg)
+      log.error(`(Request Id: ${id})`, errMsg)
       return new Response(errMsg, { status: 500 })
     }
   }
@@ -332,10 +335,10 @@ class AzeroIdRelayer {
     })
 
     if (relaySuccess) {
-      console.log(`(Request Id: ${id}) Failure status relayed back successfully`);
+      log.info(`(Request Id: ${id}) Failure status relayed back successfully`);
       return new Response('Failure status relayed back successfully', { status: 500 })
     } else {
-      console.log(`(Request Id: ${id}) Failure status was NOT relayed back`);
+      log.warn(`(Request Id: ${id}) Failure status was NOT relayed back`);
       return new Response('Failure status was NOT relayed back', { status: 500 })
     }
   }
@@ -375,8 +378,8 @@ class AzeroIdRelayer {
       if (err instanceof BaseError) {
         const revertError = err.walk(err => err instanceof ContractFunctionRevertedError)
         if (revertError instanceof ContractFunctionRevertedError) {
-          console.log(
-            `Failure state of RequestId(${id}) couldn't be relayed back with reason(${revertError.reason})`
+          log.error(
+            `(Request Id: ${id}) Failure state couldn't be relayed back with reason (${revertError.reason})`
           )
         }
       }
