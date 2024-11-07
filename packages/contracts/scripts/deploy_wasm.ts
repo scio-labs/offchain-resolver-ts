@@ -78,7 +78,7 @@ async function main() {
 
 main()
   .then((contractAddress) => {
-    console.log("Deployed address:", contractAddress)
+    console.log("Deployed address for wasm contract:", contractAddress)
   })
   .catch((error) => {
     console.error(error)

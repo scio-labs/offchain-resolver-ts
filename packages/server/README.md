@@ -4,7 +4,12 @@
 
 ## Getting Started
 
-@TODO Nimish: Anything to add here?
+### API Info
+
+`/relay` endpoint expects following arguments:
+
+1. `txhash` (mandatory): The EVM transaction that contains the `InitiateRequest` event from our target contract.
+2. `reqId` (optional): It is required when a given `txHash` contains more than one `InitiateRequest` event (can happen if someone creates a bulk-registration contract on top).
 
 ### Development
 
@@ -33,6 +38,9 @@ bun run build
 ```bash
 # Put your private key in the Cloudflare secrets manager
 bunx wrangler secret put OG_PRIVATE_KEY --env <testnet|mainnet>
+bunx wrangler secret put INFURA_API_KEY --env <testnet|mainnet>
+bunx wrangler secret put EVM_RELAYER_PRIVATE_KEY --env <testnet|mainnet>
+bunx wrangler secret put WASM_PRIVATE_KEY --env <testnet|mainnet>
 
 # Deploy the worker
 bunx wrangler deploy --env <testnet|mainnet>

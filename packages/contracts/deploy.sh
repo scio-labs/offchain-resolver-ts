@@ -7,9 +7,11 @@ source .env
 # Clean
 bun run clean
 
+echo "Deploying GATEWAY contracts..."
 # Deploy & Verify OffchainResolver
 bunx hardhat --network $NETWORK deploy --tags gateway --reset
 
+echo "Deploying RELAYER contracts..."
 # Deploy & Verify RegistrationProxy
 bunx hardhat --network $NETWORK deploy --tags relayer --reset
 

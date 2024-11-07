@@ -16,11 +16,14 @@ It specifically targets the [AZERO.ID](https://azero.id) registry, though, it ca
 | **Resolver Contract** | `0x5cf63C14b82C6E1B95023d8D23e682d12761F56C` | `0x723f6C968609F62583504DD67307A4Ae4c9Fd886` |
 | **Gateway**           | https://gateway.tzero.id                     | https://gateway.azero.id                     |
 | **ENS Domains**       | `<name>.tzero.id`³, `<name>.tzero-id.eth`    | `<name>.azero.id`³, `<name>.azero-id.eth`    |
+| **RegistrationProxy** | TODO                                         | TODO                                         |
+| **Wasm⁴**              | TODO                                         | TODO                                         |
 
 <small style="opacity: 0.5;">
   <strong>¹</strong> Ethereum Sepolia & Aleph Zero Testnet<br/>
   <strong>²</strong> Ethereum Mainnet & Aleph Zero Mainnet<br/>
   <strong>³</strong> Regular ENS Domains imported via DNSSEC<br/>
+  <strong>⁴</strong> Deployed on substrate chain<br/>
 </small>
 
 ## Packages
@@ -34,7 +37,7 @@ The smart contract provides a resolver stub that implement CCIP Read (EIP 3668) 
 The server serves as both a EVM Registration Proxy (Relayer) and as a CCIP Read Resolver (Gateway) for ENS resolution.
 
 - **Gateway**: Implements CCIP Read (EIP 3668), and answers requests by looking up the names on the registry Aleph Zero. Once a record is retrieved, it is signed using a user-provided key to assert its validity, and both record and signature are returned to the caller so they can be provided to the contract that initiated the request. It's designed to be deployed as a Cloudflare worker.
-- **Relayer**: TODO @Nimish
+- **Relayer**: Relays registration requests from EVM chain to the substrate chain. `InitiateRequest` event is emitted when `RegistrationProxy::register()` is invoked. Its `TxHash` and optionally `reqId` is submitted to the relayer that parses and executes it on the substrate chain and then relays back the result to the EVM chain. Multiple payment options (native token, ERC20, and theoretically traditional payment as well) are supported by the relayer.
 
 ### [Demo Client](packages/client/README.md)
 
