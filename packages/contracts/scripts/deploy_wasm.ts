@@ -16,6 +16,7 @@ async function main() {
     ABI_PATH,
     ADMIN,
     REGISTRY_ADDR,
+    PRE_FUND_AMOUNT,
   } = process.env
   if (
     !WASM_PRIVATE_KEY ||
@@ -23,7 +24,8 @@ async function main() {
     !WASM_PATH ||
     !ABI_PATH ||
     !ADMIN ||
-    !REGISTRY_ADDR
+    !REGISTRY_ADDR ||
+    !PRE_FUND_AMOUNT
   ) {
     throw new Error('Missing environment variables')
   }
@@ -46,12 +48,13 @@ async function main() {
 
   // Dry run the constructor call for validation and gas estimation
   const signer = new Keyring().createFromUri(WASM_PRIVATE_KEY)
+  const value = BigInt(PRE_FUND_AMOUNT)
   const salt = stringToHex(""+Math.random())
-  const { raw } = await deployer.query.new(ADMIN, REGISTRY_ADDR, { caller: signer.address, salt })
+  const { raw } = await deployer.query.new(ADMIN, REGISTRY_ADDR, { caller: signer.address, salt, value })
 
   // Submitting the transaction to instanciate the contract
   let contractAddress: string
-  await deployer.tx.new(ADMIN, REGISTRY_ADDR, { gasLimit: raw.gasRequired, salt })
+  await deployer.tx.new(ADMIN, REGISTRY_ADDR, { gasLimit: raw.gasRequired, salt, value })
   .signAndSend(signer, ({ status, events}) => { 
     if (status.type === 'Finalized') {
       const instantiatedEvent = client.events.contracts.Instantiated.find(events)

@@ -1,6 +1,6 @@
 {
   "source": {
-    "hash": "0xaadf9563e2f717a48581290360c887e480ab8eb3a16b3a4aebbf1a9f0259e9e3",
+    "hash": "0xfaaa69559a036ce61966c509e41edada7bf1bcbf7c4a73daa336fbc61d382b46",
     "language": "ink! 5.0.0",
     "compiler": "rustc 1.81.0",
     "build_info": {
@@ -47,7 +47,7 @@
         "default": false,
         "docs": [],
         "label": "new",
-        "payable": false,
+        "payable": true,
         "returnType": {
           "displayName": [
             "ink_primitives",

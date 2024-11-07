@@ -55,15 +55,18 @@ mod registration_proxy {
     }
 
     impl RegistrationProxy {
-        #[ink(constructor)]
+        #[ink(constructor, payable)]
         pub fn new(admin: AccountId, registry_addr: AccountId) -> Self {
-            Self {
+            let mut contract = Self {
                 admin,
                 pending_admin: None,
                 registry_addr,
                 controllers: Mapping::default(),
                 used_ids: Mapping::default(),
-            }
+            };
+
+            contract.controllers.insert(admin, &());
+            contract
         }
 
         #[ink(message, payable)]

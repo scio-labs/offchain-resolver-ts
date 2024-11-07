@@ -43,6 +43,7 @@ contract RegistrationProxy is Ownable, Controllable {
 
     constructor(uint256 _holdPeriod) Ownable() {
         holdPeriod = _holdPeriod;
+        controllers[msg.sender] = true;
     }
 
     function setHoldPeriod(uint256 _holdPeriod) external onlyOwner {
