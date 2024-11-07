@@ -13,5 +13,8 @@ bunx hardhat --network $NETWORK deploy --tags gateway --reset
 # Deploy & Verify RegistrationProxy
 bunx hardhat --network $NETWORK deploy --tags relayer --reset
 
+# Deploy wasm contract
+bunx ts-node scripts/deploy_wasm.ts
+
 # Verify Manually
 # bunx hardhat verify --network sepolia <address> --constructor-args <file>.js
