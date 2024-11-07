@@ -1,0 +1,74 @@
+account_id = "702b4f69f0033f956c18b119f81ea1d6"
+
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+main = "./src/index.ts"
+
+workers_dev = false
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[dev]
+port = 8080
+
+[build]
+command = "bun run build"
+
+
+# Testnet (Aleph Zero Testnet & Ethereum Sepolia)
+# Testnet: Aleph Zero Testnet
+[env.testnet]
+name = "tzero-id-gateway"
+
+# TODO @Dennis
+# [[env.testnet.kv_namespaces]]
+# binding = "GATEWAY_KV"
+# id = "57c96f8e33034440bc2bc58e8546a3a9"
+# preview_id = "36962a3091994602a0bf7b1580dabc5b"
+
+[env.testnet.route]
+pattern = "gateway.tzero.id"
+custom_domain = true
+
+# @dennis please set all the TODOs here
+[env.testnet.vars]
+LOGLEVEL = 3 # debug
+# LOGLEVEL = 0 # silent
+OG_TTL = 60
+AZERO_RPC_URL = "wss://ws.test.azero.dev"
+EVM_RPC_BASE_URL = "https://sepolia.infura.io/v3"
+SUPPORTED_TLDS = { "tzero.id" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD", "tzero-id.eth" = "5FsB91tXSEuMj6akzdPczAtmBaVKToqHmtAwSUzXh49AYzaD" }
+EVM_RELAYER_CONTRACT = "TODO"
+WASM_RELAYER_CONTRACT = "TODO"
+BUFFER_DURATION_IN_MIN = "10"
+
+# Mainnet (Aleph Zero Mainnet & Ethereum Mainnet)
+
+[env.mainnet]
+name = "azero-id-gateway"
+
+# TODO @Dennis
+# [[env.mainnet.kv_namespaces]]
+# binding = "GATEWAY_KV"
+# id = "57c96f8e33034440bc2bc58e8546a3a9"
+# preview_id = "36962a3091994602a0bf7b1580dabc5b"
+
+[env.mainnet.route]
+pattern = "gateway.azero.id"
+custom_domain = true
+
+[env.mainnet.vars]
+# LOGLEVEL = 3 # debug
+LOGLEVEL = 0                                                                                                                                              # silent
+OG_TTL = 60
+AZERO_RPC_URL = "wss://ws.azero.dev"
+EVM_RPC_BASE_URL = "https://mainnet.infura.io/v3"
+SUPPORTED_TLDS = { "azero.id" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf", "azero-id.eth" = "5CTQBfBC9SfdrCDBJdfLiyW2pg9z5W6C6Es8sK313BLnFgDf" }
+EVM_RELAYER_CONTRACT = "TODO"
+WASM_RELAYER_CONTRACT = "TODO"
+BUFFER_DURATION_IN_MIN = "10"

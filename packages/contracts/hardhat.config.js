@@ -11,6 +11,7 @@ if (process.env.DEPLOYER_KEY) {
   real_accounts = [process.env.DEPLOYER_KEY];
 }
 const gatewayurl = process.env.REMOTE_GATEWAY || "http://localhost:8080/";
+const holdPeriod = process.env.HOLD_PERIOD || "3600"; // default: 1hr (3600 seconds)
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -35,6 +36,7 @@ module.exports = {
     hardhat: {
       throwOnCallFailures: false,
       gatewayurl,
+      holdPeriod,
     },
     sepolia: {
       url: `https://sepolia.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -42,6 +44,7 @@ module.exports = {
       chainId: 11155111,
       accounts: real_accounts,
       gatewayurl,
+      holdPeriod,
     },
     mainnet: {
       url: `https://mainnet.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -49,6 +52,7 @@ module.exports = {
       chainId: 1,
       accounts: real_accounts,
       gatewayurl,
+      holdPeriod,
     },
   },
   etherscan: {

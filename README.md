@@ -14,25 +14,32 @@ It specifically targets the [AZERO.ID](https://azero.id) registry, though, it ca
 |                       | **Testnet¹**                                 | **Mainnet²**                                 |
 | --------------------- | -------------------------------------------- | -------------------------------------------- |
 | **Resolver Contract** | `0x5cf63C14b82C6E1B95023d8D23e682d12761F56C` | `0x723f6C968609F62583504DD67307A4Ae4c9Fd886` |
-| **Gateway**           | https://tzero-id-gateway.nameverse.io        | https://azero-id-gateway.nameverse.io        |
-| **ENS Domain**        | `*.tzero-id.eth`, `tzero.eth`                | `*.azero-id.eth`                             |
+| **Gateway**           | https://gateway.tzero.id                     | https://gateway.azero.id                     |
+| **ENS Domains**       | `<name>.tzero.id`³, `<name>.tzero-id.eth`    | `<name>.azero.id`³, `<name>.azero-id.eth`    |
+| **RegistrationProxy** | TODO                                         | TODO                                         |
+| **Wasm⁴**              | TODO                                         | TODO                                         |
 
 <small style="opacity: 0.5;">
-  <strong>¹ Testnet:</strong> Ethereum Sepolia & Aleph Zero Testnet<br/>
-  <strong>² Mainnet:</strong> Ethereum Mainnet & Aleph Zero Mainnet<br/>
+  <strong>¹</strong> Ethereum Sepolia & Aleph Zero Testnet<br/>
+  <strong>²</strong> Ethereum Mainnet & Aleph Zero Mainnet<br/>
+  <strong>³</strong> Regular ENS Domains imported via DNSSEC<br/>
+  <strong>⁴</strong> Deployed on substrate chain<br/>
 </small>
 
 ## Packages
 
-### [Solidity Contracts](packages/contracts)
+### [Solidity Contracts](packages/contracts/README.md)
 
 The smart contract provides a resolver stub that implement CCIP Read (EIP 3668) and ENS wildcard resolution (ENSIP 10). When queried for a name, it directs the client to query the gateway server. When called back with the gateway server response, the resolver verifies the signature was produced by an authorised signer, and returns the response to the client.
 
-### [Gateway Server](packages/gateway)
+### [Gateway & Relayer Server](packages/server/README.md)
 
-The gateway server implements CCIP Read (EIP 3668), and answers requests by looking up the names on the registry Aleph Zero. Once a record is retrieved, it is signed using a user-provided key to assert its validity, and both record and signature are returned to the caller so they can be provided to the contract that initiated the request. It's designed to be deployed as a Cloudflare worker.
+The server serves as both a EVM Registration Proxy (Relayer) and as a CCIP Read Resolver (Gateway) for ENS resolution.
 
-### [Demo Client](packages/client)
+- **Gateway**: Implements CCIP Read (EIP 3668), and answers requests by looking up the names on the registry Aleph Zero. Once a record is retrieved, it is signed using a user-provided key to assert its validity, and both record and signature are returned to the caller so they can be provided to the contract that initiated the request. It's designed to be deployed as a Cloudflare worker.
+- **Relayer**: Relays registration requests from EVM chain to the substrate chain. `InitiateRequest` event is emitted when `RegistrationProxy::register()` is invoked. Its `TxHash` and optionally `reqId` is submitted to the relayer that parses and executes it on the substrate chain and then relays back the result to the EVM chain. Multiple payment options (native token, ERC20, and theoretically traditional payment as well) are supported by the relayer.
+
+### [Demo Client](packages/client/README.md)
 
 A simple script that resolves a given domain through the ENS protocol (using the gateway server) and verifies the response with the result from the registry contracts directly on the Aleph Zero network.
 
@@ -44,7 +51,7 @@ A simple script that resolves a given domain through the ENS protocol (using the
 > - Install [Bun](https://bun.sh/)
 > - Clone this repository
 
-1. Run the gateway server ([packages/gateway/README.md](packages/gateway/README.md))
+1. Run the gateway server ([packages/server/README.md](packages/server/README.md))
    1. Use the worker url as environment variable when deploying the contracts
 2. Deploy the contracts ([packages/contracts/README.md](packages/contracts/README.md))
    1. Assign the new resolver to your ENS name

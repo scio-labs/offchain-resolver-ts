@@ -22,6 +22,6 @@
     "noPropertyAccessFromIndexSignature": false,
     "outDir": "./dist",
   },
-  "include": ["src","types"],
+  "include": ["src","types", "wagmi.generated.ts"],
   "exclude": ["node_modules", "dist"],
 }
